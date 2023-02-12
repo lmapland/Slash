@@ -78,9 +78,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
 	AWeapon* EquippedWeapon;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-	AWeapon* SecondEquippedWeapon;
-
 	UPROPERTY(EditAnywhere, Category = Combat)
 	USoundBase* HitSound;
 

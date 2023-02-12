@@ -223,16 +223,11 @@ void ASlashCharacter::Interact()
 		AWeapon* Weapon = Cast <AWeapon>(OverlappingItem);
 		if (Weapon)
 		{
-			// If the character is unarmed, pick up the weapon
-			// Likewise if the char is dual-wielding let them replace the weapon they are using in their right hand
-			if (CharacterState == ECharacterState::ECS_Unequipped || CharacterState == ECharacterState::ECS_EquippedDualWieldWeapon)
+			if (EquippedWeapon)
 			{
-				Equip1HWeapon(Weapon);
+				EquippedWeapon->Destroy();
 			}
-			else if (CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon) // If the character has one weapon, give them another
-			{
-				EquipDualWieldWeapons(Weapon);
-			} // need to handle 2-handers eventually here
+			Equip1HWeapon(Weapon); // need to handle 2-handers eventually here
 		}
 		else
 		{
@@ -323,10 +318,6 @@ int32 ASlashCharacter::PlayAttackMontage()
 		AnimInstance->Montage_Play(AttackMontage, 1.f);
 
 		FName SectionName = FName("Attack1");
-		if (CharacterState == ECharacterState::ECS_EquippedDualWieldWeapon)
-		{
-			SectionName = FName("DualWieldAttack1");
-		}
 
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
@@ -365,11 +356,7 @@ void ASlashCharacter::Equip() // r
 				ActionState = EActionState::EAS_Equipping; // so the char can't move
 			}
 
-			if (SecondEquippedWeapon)
-			{
-				CharacterState = ECharacterState::ECS_EquippedDualWieldWeapon;
-			}
-			else if (EquippedWeapon)
+			if (EquippedWeapon)
 			{
 				CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon; // needs refactoring: what if toon has 2H weapon? Or bow or staff or whatever
 			}
@@ -417,14 +404,6 @@ void ASlashCharacter::Equip1HWeapon(AWeapon* Weapon)
 	bIsArmed = true;
 }
 
-void ASlashCharacter::EquipDualWieldWeapons(AWeapon* Weapon)
-{
-	Weapon->Equip(GetMesh(), FName("LeftHandDualWieldSocket"), this, this);
-	EquippedWeapon->Equip(GetMesh(), FName("RightHandDualWieldSocket"), this, this); // need dagger facing the other way now for the attack skill I have
-	CharacterState = ECharacterState::ECS_EquippedDualWieldWeapon;
-	SecondEquippedWeapon = Weapon;
-}
-
 bool ASlashCharacter::CanAttack()
 {
 	return (ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped);
@@ -444,10 +423,6 @@ void ASlashCharacter::AttachWeaponToBack()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): EquippedWeapon is true"));
 	}
-	if (SecondEquippedWeapon)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): SecondEquippedWeapon is true"));
-	}
 	if (CharacterState == ECharacterState::ECS_Unequipped)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): CharacterState is Unequipped"));
@@ -456,40 +431,22 @@ void ASlashCharacter::AttachWeaponToBack()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): CharacterState is EquippedOneHandedWeapon"));
 	}
-	else if (CharacterState == ECharacterState::ECS_EquippedDualWieldWeapon)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): CharacterState is EquippedDualWieldWeapon"));
-	}
 
-	if (EquippedWeapon && !SecondEquippedWeapon) //&& CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon)
+	if (EquippedWeapon) //&& CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): 1H Unequip"));
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
-		ActionState = EActionState::EAS_Unoccupied;
-	}
-	else if (SecondEquippedWeapon) // && CharacterState == ECharacterState::ECS_EquippedDualWieldWeapon)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): Dual-wield Unequip"));
-		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
-		SecondEquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket2"));
 		ActionState = EActionState::EAS_Unoccupied;
 	}
 }
 
 void ASlashCharacter::AttachWeaponToHand()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("AttachWeaponToHand(): "));
 	// if the character is 1H, pick up their single weapon
 	if (CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In Arm(): 1H Equip"));
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));
-	}
-	else if (CharacterState == ECharacterState::ECS_EquippedDualWieldWeapon)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In Arm(): Dual-wield Equip"));
-		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandDualWieldSocket"));
-		SecondEquippedWeapon->AttachMeshToSocket(GetMesh(), FName("LeftHandDualWieldSocket"));
 	}
 	ActionState = EActionState::EAS_Unoccupied;
 }

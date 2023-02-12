@@ -62,7 +62,6 @@ protected:
 	void ZoomOut();
 	
 	void Equip1HWeapon(AWeapon* Weapon);
-	void EquipDualWieldWeapons(AWeapon* Weapon);
 	virtual bool CanAttack() override;
 	virtual void Die_Implementation() override;
 	
