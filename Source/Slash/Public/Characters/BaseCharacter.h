@@ -56,14 +56,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	FVector GetRotationWarpTarget();
 
-	// Everything necessary to begin the attack, esp. to make sure all relevant enemies are hit by the attack
-	//UFUNCTION(BlueprintCallable)
-	//void BeginAttackCollision(ECollisionEnabled::Type CollisionEnabled);
-
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
-
-	//void HandleOverlappingActors();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AttackEnd();

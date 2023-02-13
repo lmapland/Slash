@@ -18,9 +18,9 @@ enum class EActionState : uint8
 	EAS_PickingUp UMETA(DisplayName = "PickingUp"),
 	EAS_Blocking UMETA(DisplayName = "Blocking"),
 	EAS_Dodging UMETA(DisplayName = "Dodge"),
+	EAS_Sprinting UMETA(DisplayName = "Sprinting"),
 	EAS_Dead UMETA(DisplayName = "Dead")
 };
-
 
 UENUM(BlueprintType)
 enum EDeathPose

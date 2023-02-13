@@ -19,6 +19,11 @@ void UAttributeComponent::RegenStamina(float DeltaTime)
 	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
 }
 
+void UAttributeComponent::DrainStamina(float DeltaTime)
+{
+	Stamina = FMath::Clamp(Stamina - StaminaDrainRate * DeltaTime, 0.f, MaxStamina);
+}
+
 // Called when the game starts
 void UAttributeComponent::BeginPlay()
 {

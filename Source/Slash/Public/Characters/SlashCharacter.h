@@ -53,6 +53,7 @@ protected:
 	void Interact();
 	void Dodge();
 	virtual void Attack() override;
+	virtual void AttackEnd() override;
 	virtual void DodgeEnd() override;
 	virtual int32 PlayAttackMontage() override;
 	void Equip();
@@ -60,9 +61,12 @@ protected:
 	void EndBlock();
 	void ZoomIn();
 	void ZoomOut();
+	void Sprint();
+	void EndSprint();
 	
 	void Equip1HWeapon(AWeapon* Weapon);
 	virtual bool CanAttack() override;
+	bool CanSprint();
 	virtual void Die_Implementation() override;
 	
 	UFUNCTION(BlueprintCallable)
@@ -109,6 +113,9 @@ protected:
 	UInputAction* ZoomInAction; // mouse wheel scroll up
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* SprintAction; // left shift
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* ZoomOutAction; // mouse wheel scroll up
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -131,17 +138,30 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	int32 AttackCost = 10;
 
+	/* Movement Speeds */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeedNormal = 400.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeedSprint = 700.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeedBlock = 200.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	EActionState ActionState = EActionState::EAS_Unoccupied;
+
+
+
 private:
 	void InitializeSlashOverlay();
 	void SetHUDHealth();
 	bool IsOccupied();
 	/* Pickup items */
 	void RemovePickedUpItem();
+	void UpdateActionState(EActionState State);
 
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
-
-	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	EActionState ActionState = EActionState::EAS_Unoccupied;
 
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* CameraBoom;

@@ -64,6 +64,7 @@ ASlashCharacter::ASlashCharacter()
 	ZoomInOutAmount = 30.f;
 
 	bIsArmed = false;
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
@@ -72,7 +73,20 @@ void ASlashCharacter::Tick(float DeltaTime)
 {
 	if (Attributes && SlashOverlay)
 	{
-		if (ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_Dodging && ActionState != EActionState::EAS_Attacking)
+		// Stamina use / regen
+		if (ActionState == EActionState::EAS_Sprinting)
+		{
+			if (Attributes->GetStamina() > 0)
+			{
+				Attributes->DrainStamina(DeltaTime);
+				SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+			}
+			else
+			{
+				UpdateActionState(EActionState::EAS_Unoccupied);
+			}
+		}
+		else if (ActionState != EActionState::EAS_Dead && ActionState != EActionState::EAS_Dodging && ActionState != EActionState::EAS_Attacking)
 		{
 			Attributes->RegenStamina(DeltaTime);
 			SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
@@ -101,6 +115,9 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &ASlashCharacter::Block);
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Completed, this, &ASlashCharacter::EndBlock);
 
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ASlashCharacter::Sprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ASlashCharacter::EndSprint);
+
 	}
 }
 
@@ -118,7 +135,7 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* 
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (Attributes && Attributes->GetHealth() > 0.f)
 	{
-		ActionState = EActionState::EAS_HitReaction;
+		UpdateActionState(EActionState::EAS_HitReaction);
 	}
 }
 
@@ -194,7 +211,7 @@ void ASlashCharacter::BeginPlay()
 
 void ASlashCharacter::Move(const FInputActionValue& Value)
 {
-	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Blocking) return;
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Blocking && ActionState != EActionState::EAS_Sprinting) return;
 
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -237,7 +254,7 @@ void ASlashCharacter::Interact()
 				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 				if (AnimInstance && AttackMontage && ToPickUp->Pickable())
 				{
-					ActionState = EActionState::EAS_PickingUp;
+					UpdateActionState(EActionState::EAS_PickingUp);
 					ToPickUp->Pick();
 					AnimInstance->Montage_Play(AttackMontage, ToPickUp->AnimSpeed);
 					AnimInstance->Montage_JumpToSection(ToPickUp->AnimationToPlay, AttackMontage);
@@ -285,7 +302,7 @@ void ASlashCharacter::Dodge()
 		AnimInstance->Montage_Play(AttackMontage, 1.4f);
 
 		FName SectionName = FName("Dodge");
-		ActionState = EActionState::EAS_Dodging;
+		UpdateActionState(EActionState::EAS_Dodging);
 		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
 	}
 }
@@ -296,16 +313,21 @@ void ASlashCharacter::Attack()
 
 	if (CanAttack() && Attributes && Attributes->UseStaminaIfAble(AttackCost))
 	{
-		ActionState = EActionState::EAS_Attacking;
+		UpdateActionState(EActionState::EAS_Attacking);
 		PlayAttackMontage();
 	}
+}
+
+void ASlashCharacter::AttackEnd()
+{
+	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
 void ASlashCharacter::DodgeEnd()
 {
 	Super::DodgeEnd();
 
-	ActionState = EActionState::EAS_Unoccupied;
+	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
 int32 ASlashCharacter::PlayAttackMontage()
@@ -338,7 +360,7 @@ void ASlashCharacter::Equip() // r
 				UE_LOG(LogTemp, Warning, TEXT("Character is armed; playing Disarm animation"));
 				AnimInstance->Montage_Play(AttackMontage, 1.f);
 				AnimInstance->Montage_JumpToSection(FName("Disarm"), AttackMontage);
-				ActionState = EActionState::EAS_Equipping; // so the char can't move
+				UpdateActionState(EActionState::EAS_Equipping); // so the char can't move
 			}
 
 			CharacterState = ECharacterState::ECS_Unequipped;
@@ -353,7 +375,7 @@ void ASlashCharacter::Equip() // r
 				UE_LOG(LogTemp, Warning, TEXT("Character is Not armed; playing Arm animation"));
 				AnimInstance->Montage_Play(AttackMontage, 1.f);
 				AnimInstance->Montage_JumpToSection(FName("Arm"), AttackMontage);
-				ActionState = EActionState::EAS_Equipping; // so the char can't move
+				UpdateActionState(EActionState::EAS_Equipping); // so the char can't move
 			}
 
 			if (EquippedWeapon)
@@ -368,16 +390,13 @@ void ASlashCharacter::Equip() // r
 void ASlashCharacter::Block()
 {
 	// user holds down right mouse button to block
-	ActionState = EActionState::EAS_Blocking;
-
-	GetCharacterMovement()->MaxWalkSpeed -= 450.f;
+	UpdateActionState(EActionState::EAS_Blocking);
 }
 
 void ASlashCharacter::EndBlock()
 {
 	// user holds down right mouse button to block
-	ActionState = EActionState::EAS_Unoccupied;
-	GetCharacterMovement()->MaxWalkSpeed += 450.f;
+	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
 void ASlashCharacter::ZoomIn()
@@ -396,6 +415,16 @@ void ASlashCharacter::ZoomOut()
 	}
 }
 
+void ASlashCharacter::Sprint()
+{
+	if (CanSprint()) UpdateActionState(EActionState::EAS_Sprinting);
+}
+
+void ASlashCharacter::EndSprint()
+{
+	if (ActionState == EActionState::EAS_Sprinting) UpdateActionState(EActionState::EAS_Unoccupied);
+}
+
 void ASlashCharacter::Equip1HWeapon(AWeapon* Weapon)
 {
 	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
@@ -409,11 +438,18 @@ bool ASlashCharacter::CanAttack()
 	return (ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped);
 }
 
+bool ASlashCharacter::CanSprint()
+{
+	return (ActionState == EActionState::EAS_Unoccupied) &&
+		(GetVelocity().X != 0.f) && (GetVelocity().Y != 0.f) &&
+		(Attributes->GetStamina() > 0);
+}
+
 void ASlashCharacter::Die_Implementation()
 {
 	Super::Die_Implementation();
 
-	ActionState = EActionState::EAS_Dead;
+	UpdateActionState(EActionState::EAS_Dead);
 	DisableMeshCollision();
 }
 
@@ -434,9 +470,8 @@ void ASlashCharacter::AttachWeaponToBack()
 
 	if (EquippedWeapon) //&& CharacterState == ECharacterState::ECS_EquippedOneHandedWeapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("In Disarm(): 1H Unequip"));
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("SpineSocket"));
-		ActionState = EActionState::EAS_Unoccupied;
+		UpdateActionState(EActionState::EAS_Unoccupied);
 	}
 }
 
@@ -448,18 +483,18 @@ void ASlashCharacter::AttachWeaponToHand()
 		UE_LOG(LogTemp, Warning, TEXT("In Arm(): 1H Equip"));
 		EquippedWeapon->AttachMeshToSocket(GetMesh(), FName("RightHandSocket"));
 	}
-	ActionState = EActionState::EAS_Unoccupied;
+	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
 void ASlashCharacter::CompleteItemPickup()
 {
 	// Called by Anim Notify to un-stuck the character
-	ActionState = EActionState::EAS_Unoccupied;
+	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
 void ASlashCharacter::HitReactEnd()
 {
-	ActionState = EActionState::EAS_Unoccupied;
+	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
 // private
@@ -499,4 +534,37 @@ void ASlashCharacter::RemovePickedUpItem()
 {
 	ItemPickedUp->Destroy();
 	ItemPickedUp = nullptr;
+}
+
+void ASlashCharacter::UpdateActionState(EActionState State)
+{
+	switch (State)
+	{
+	case EActionState::EAS_Attacking:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
+		break;
+	case EActionState::EAS_Blocking:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedBlock;
+		break;
+	case EActionState::EAS_Dodging:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
+		break;
+	case EActionState::EAS_Equipping:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
+		break;
+	case EActionState::EAS_HitReaction:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
+		break;
+	case EActionState::EAS_PickingUp:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
+		break;
+	case EActionState::EAS_Unoccupied:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
+		break;
+	case EActionState::EAS_Sprinting:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedSprint;
+		break;
+	};
+
+	ActionState = State;
 }
