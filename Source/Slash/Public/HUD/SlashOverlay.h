@@ -21,6 +21,14 @@ public:
 	void SetSouls(int32 Souls);
 	void SetFlowers(int32 Flowers);
 	void SetOre(int32 Ore);
+	void SetLevelInfo(int32 Level, float LevelPercent);
+	void OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
+	void ShowTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
+	void UpdateTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
 
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -40,4 +48,10 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* OreText;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* LevelText;
+	
+	UPROPERTY(meta = (BindWidget))
+	UProgressBar* LevelProgressBar;
 };

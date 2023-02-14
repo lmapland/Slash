@@ -53,3 +53,21 @@ void USlashOverlay::SetOre(int32 Ore)
 		OreText->SetText(FText::FromString(FString::Printf(TEXT("%i"), Ore)));
 	}
 }
+
+void USlashOverlay::SetLevelInfo(int32 Level, float LevelPercent)
+{
+	if (LevelText)
+	{
+		LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level %i"), Level)));
+	}
+
+	if (LevelProgressBar)
+	{
+		LevelProgressBar->SetPercent(LevelPercent);
+	}
+}
+
+void USlashOverlay::OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel)
+{
+	ShowTabWidget(Souls, SoulsNeeded, NextLevel);
+}

@@ -63,6 +63,7 @@ protected:
 	void ZoomOut();
 	void Sprint();
 	void EndSprint();
+	void OpenEverythingMenu();
 	
 	void Equip1HWeapon(AWeapon* Weapon);
 	virtual bool CanAttack() override;
@@ -80,6 +81,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void HitReactEnd();
+
+	UFUNCTION(BlueprintCallable)
+	void RequestLevelUp();
 	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
@@ -120,6 +124,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* BlockAction; // left-click
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* OpenEverythingMenuAction; // left-click
 
 
 	/* Zooming */

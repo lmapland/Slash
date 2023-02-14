@@ -137,12 +137,6 @@ FVector ABaseCharacter::GetRotationWarpTarget()
 	return FVector();
 }
 
-/*void ABaseCharacter::BeginAttackCollision(ECollisionEnabled::Type CollisionEnabled)
-{
-	SetWeaponCollisionEnabled(CollisionEnabled);
-	//HandleOverlappingActors();
-}*/
-
 bool ABaseCharacter::CanAttack()
 {
 	return false;

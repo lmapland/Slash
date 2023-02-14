@@ -108,6 +108,7 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Dodge);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Attack);
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Equip);
+		EnhancedInputComponent->BindAction(OpenEverythingMenuAction, ETriggerEvent::Completed, this, &ASlashCharacter::OpenEverythingMenu);
 
 		EnhancedInputComponent->BindAction(ZoomInAction, ETriggerEvent::Triggered, this, &ASlashCharacter::ZoomIn);
 		EnhancedInputComponent->BindAction(ZoomOutAction, ETriggerEvent::Triggered, this, &ASlashCharacter::ZoomOut);
@@ -159,6 +160,7 @@ void ASlashCharacter::AddSouls(ASoul* Soul)
 	{
 		Attributes->AddSouls(Soul->GetSouls());
 		SlashOverlay->SetSouls(Attributes->GetSouls());
+		SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 	}
 }
 
@@ -425,6 +427,21 @@ void ASlashCharacter::EndSprint()
 	if (ActionState == EActionState::EAS_Sprinting) UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
+/*
+* It may seem like this should be a toggle, but this code only ever opens the menu.
+* In the WBP code I use "UI Mode Only" when this Tab/Everything menu is opened,
+* therefore all further input is captured and handled by the WBP. The WBP is
+* responsible for handling Hiding the menu, not this code.
+ */
+void ASlashCharacter::OpenEverythingMenu()
+{
+	UE_LOG(LogTemp, Warning, TEXT("In OpenEverythingMenu()"));
+	if (SlashOverlay && Attributes)
+	{
+		SlashOverlay->OpenEverythingMenu(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);
+	}
+}
+
 void ASlashCharacter::Equip1HWeapon(AWeapon* Weapon)
 {
 	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
@@ -497,6 +514,17 @@ void ASlashCharacter::HitReactEnd()
 	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
+void ASlashCharacter::RequestLevelUp()
+{
+	if (Attributes && SlashOverlay)
+	{
+		Attributes->LevelUp();
+		SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
+		SlashOverlay->UpdateTabWidget(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);
+		UE_LOG(LogTemp, Warning, TEXT("Called UpdateTabWidget"));
+	}
+}
+
 // private
 void ASlashCharacter::InitializeSlashOverlay()
 {
@@ -512,6 +540,9 @@ void ASlashCharacter::InitializeSlashOverlay()
 				SlashOverlay->SetStaminaBarPercent(1.f); // Attributes->GetStaminaPercent());
 				SlashOverlay->SetGold(0);
 				SlashOverlay->SetSouls(0);
+				SlashOverlay->SetOre(0);
+				SlashOverlay->SetFlowers(0);
+				SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 			}
 		}
 	}

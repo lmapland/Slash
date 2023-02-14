@@ -13,7 +13,6 @@ UAttributeComponent::UAttributeComponent()
 	// ...
 }
 
-
 void UAttributeComponent::RegenStamina(float DeltaTime)
 {
 	Stamina = FMath::Clamp(Stamina + StaminaRegenRate * DeltaTime, 0.f, MaxStamina);
@@ -82,4 +81,17 @@ void UAttributeComponent::AddFlowers(int32 Value)
 void UAttributeComponent::AddOre(int32 Value)
 {
 	Ore += Value;
+}
+
+void UAttributeComponent::LevelUp()
+{
+	// User has clicked the button. First we verify that the user has enough Souls to level, then do it
+	if (Souls < SoulsPerLevel[Level])
+	{
+		UE_LOG(LogTemp, Warning, TEXT("In LevelUp(): Could not level up; user has %i out of %i Souls"), Souls, SoulsPerLevel[Level]);
+		return;
+	}
+
+	Souls -= SoulsPerLevel[Level];
+	Level += 1;
 }

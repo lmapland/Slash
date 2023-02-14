@@ -52,6 +52,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float StaminaDrainRate = 12.f;
 
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	int32 Level = 1;
+
+	TArray<int32> SoulsPerLevel = { 0, 3, 5, 8, 12, 17, 23, 30, 38, 47 };
+
 public:
 	void ReceiveDamage(float Damage);
 	bool UseStaminaIfAble(int32 Value);
@@ -62,7 +67,7 @@ public:
 	void AddGold(int32 Value);
 	void AddFlowers(int32 Value);
 	void AddOre(int32 Value);
-
+	void LevelUp();
 
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
@@ -72,6 +77,9 @@ public:
 	FORCEINLINE int32 GetSouls() const { return Souls; }
 	FORCEINLINE int32 GetFlowers() const { return Flowers; }
 	FORCEINLINE int32 GetOre() const { return Ore; }
+	FORCEINLINE int32 GetLevel() const { return Level; }
+	FORCEINLINE int32 GetSoulsUntilNextLevel() const { return SoulsPerLevel[Level]; }
+	FORCEINLINE float GetPercentToNextLevel() const { return (Souls * 1.f) / (SoulsPerLevel[Level] * 1.f); }
 
 	FORCEINLINE void AddHealth(int32 Value) { Health = FMath::Clamp(Health + Value, 0.f, MaxHealth); }
 	FORCEINLINE void AddStamina(int32 Value) { Stamina = FMath::Clamp(Stamina + Value, 0.f, MaxStamina); }
