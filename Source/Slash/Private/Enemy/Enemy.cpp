@@ -153,7 +153,14 @@ void AEnemy::AttackEnd()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("In Enemy::AttackEnd()"));
 	EnemyState = EEnemyState::EES_NoState;
-	CheckCombatTarget2();
+	CheckCombatTarget();
+}
+
+void AEnemy::StartPatrolling()
+{
+	EnemyState = EEnemyState::EES_Patrolling;
+	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
+	MoveToTarget(PatrolTarget);
 }
 
 void AEnemy::SetExtraWeaponCollisionEnabled(int32 WeaponIndex)
@@ -202,8 +209,8 @@ void AEnemy::CheckCombatTarget()
 	}
 	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideAttackRadius() && !IsChasing()"));
 		// Enemy is probably Attacking or Engaging and and Character has moved outside of Attack Radius
+		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideAttackRadius() && !IsChasing()"));
 		ClearAttackTimer();
 		if (!IsEngaged()) StartChaseTarget();
 	}
@@ -216,43 +223,16 @@ void AEnemy::CheckCombatTarget()
 	}
 }
 
-void AEnemy::CheckCombatTarget2()
-{
-	if (IsOutsideCombatRadius())
-	{
-		// Called in the case that Character is behind Enemy or ALSO character is being chased because of PawnSeen()
-		// In the latter case, every .5s the Enemy will lose interest in the character and then regain interest through PawnSeen()
-		UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideCombatRadius()"));
-		ClearAttackTimer();
-		LoseInterest();
-		if (!IsEngaged()) StartPatrolling();
-	}
-	else if (IsOutsideAttackRadius() && !IsChasing())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideAttackRadius() && !IsChasing()"));
-		// Enemy is probably Attacking or Engaging and and Character has moved outside of Attack Radius
-		ClearAttackTimer();
-		if (!IsEngaged()) StartChaseTarget();
-	}
-	else if (CanAttack())
-	{
-		// Enemy is inside AttackRadius, Enemy may be Patrolling and turned away
-		UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): Attacking"));
-		ClearPatrolTimer();
-		if (!IsEngaged()) StartAttackTimer();
-	}
-}
-
 AActor* AEnemy::ChoosePatrolTarget()
 {
 	// if there's only 1 target, then the new target & current target will always be equal
-	if (PatrolTargets.Num() <= 1) return nullptr;
+	if (PatrolPoints.Num() <= 1) return nullptr;
 
 	// choose a new target, compare to old target. If equal, select a new target
-	AActor* NewTarget = PatrolTargets[FMath::RandRange(0, PatrolTargets.Num() - 1)];
+	AActor* NewTarget = PatrolPoints[FMath::RandRange(0, PatrolPoints.Num() - 1)];
 	while (NewTarget == PatrolTarget)
 	{
-		NewTarget = PatrolTargets[FMath::RandRange(0, PatrolTargets.Num() - 1)];
+		NewTarget = PatrolPoints[FMath::RandRange(0, PatrolPoints.Num() - 1)];
 	}
 	return NewTarget;
 }
@@ -266,13 +246,6 @@ void AEnemy::LoseInterest()
 {
 	CombatTarget = nullptr;
 	HideHealthBar();
-}
-
-void AEnemy::StartPatrolling()
-{
-	EnemyState = EEnemyState::EES_Patrolling;
-	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
-	MoveToTarget(PatrolTarget);
 }
 
 void AEnemy::StartChaseTarget()
@@ -404,7 +377,6 @@ void AEnemy::SpawnSoul()
 		ASoul* SpawnedSoul = GetWorld()->SpawnActor<ASoul>(SoulClass, SpawnLocation, GetActorRotation());
 		if (SpawnedSoul)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("In SpawnSoul(): A soul was spawned"));
 			SpawnedSoul->SetSouls(Attributes->GetSouls());
 			SpawnedSoul->SetOwner(this);
 		}

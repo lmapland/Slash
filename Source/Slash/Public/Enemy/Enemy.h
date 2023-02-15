@@ -26,6 +26,9 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	/** </IHitInterface> */
 
+	UFUNCTION(BlueprintCallable)
+	void StartPatrolling();
+
 protected:
 	/** <AActor> */
 	virtual void BeginPlay() override;
@@ -48,6 +51,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Navigation")
+	TArray<AActor*> PatrolPoints;
+	
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI Navigation")
+	AActor* PatrolTarget;
+
+	
 private:
 	// AI Behavior
 	void CheckPatrolTarget();
@@ -56,7 +66,6 @@ private:
 	AActor* ChoosePatrolTarget();
 	void PatrolTimerFinished();
 	void LoseInterest();
-	void StartPatrolling();
 	void StartChaseTarget();
 	bool IsOutsideCombatRadius();
 	bool IsOutsideAttackRadius();
@@ -123,12 +132,6 @@ private:
 	UPROPERTY()
 	class AAIController* EnemyController;
 
-	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
-	AActor* PatrolTarget;
-
-	UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
-	TArray<AActor*> PatrolTargets;
-
 	UPROPERTY(EditAnywhere)
 	double PatrolRadius = 200.0;
 
@@ -159,5 +162,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> SoulClass;
+
+public:
+	FORCEINLINE void AddPatrolPoint(AActor* Point) { PatrolPoints.Add(Point); }
+	FORCEINLINE void SetFirstPatrolPoint(AActor* Point) { PatrolTarget = Point; }
 
 };
