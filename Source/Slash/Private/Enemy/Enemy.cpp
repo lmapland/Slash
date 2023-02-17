@@ -187,6 +187,15 @@ void AEnemy::SetExtraWeaponCollisionDisabled()
 }
 
 // private
+/*
+ * Patrolling is prone to breaking. A possible solution:
+ * If no moverequest && no patrol timer active OR if moverequest is incomplete && enemy velocity is 0 (Enemy needs a kick):
+ *   Cancel existing moverequest (if applicable), grab a new patrol point and create a new moverequest
+ *   Also, might add an actual "is navigable" check before executing the moverequest
+ *   Also also, all over the place we're assuming that the PatrolTarget is set; we should not do that. Right before RequestMove() (or whatever)
+ *   we should check if PatrolTarget is set and if not, just set it! Don't let Patrolling get in a bad state just because there's no PatrolTarget,
+ *   how silly
+ */
 void AEnemy::CheckPatrolTarget()
 {
 	if (InTargetRange(PatrolTarget, PatrolRadius))
