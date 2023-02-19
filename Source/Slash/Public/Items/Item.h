@@ -35,9 +35,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	FName AnimationToPlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
-	class UNiagaraComponent* ItemParticles;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -58,6 +55,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class USphereComponent* Sphere;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	class UNiagaraComponent* ItemParticles;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Item Properties")
 	FName ItemName;
