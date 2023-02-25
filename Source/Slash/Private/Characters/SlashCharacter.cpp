@@ -51,6 +51,7 @@ ASlashCharacter::ASlashCharacter()
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
 
+	/* Character Mesh Components */
 	Hair = CreateDefaultSubobject<UGroomComponent>(TEXT("Hair"));
 	Hair->SetupAttachment(GetMesh());
 	Hair->AttachmentName = FString("head");
@@ -58,6 +59,77 @@ ASlashCharacter::ASlashCharacter()
 	Eyebrows = CreateDefaultSubobject<UGroomComponent>(TEXT("Eyebrows"));
 	Eyebrows->SetupAttachment(GetMesh());
 	Eyebrows->AttachmentName = FString("head");
+
+	EyesComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Eyes"));
+	EyesComponent->SetupAttachment(GetMesh());
+
+	FaceComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Face"));
+	FaceComponent->SetupAttachment(GetMesh());
+
+	NeckComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Neck"));
+	NeckComponent->SetupAttachment(GetMesh());
+
+	ChestComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Chest"));
+	ChestComponent->SetupAttachment(GetMesh());
+
+	ArmsComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Arms"));
+	ArmsComponent->SetupAttachment(GetMesh());
+
+	HandsComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hands"));
+	HandsComponent->SetupAttachment(GetMesh());
+
+	LegsComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Legs"));
+	LegsComponent->SetupAttachment(GetMesh());
+
+	FeetComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Feet"));
+	FeetComponent->SetupAttachment(GetMesh());
+
+	EyebrowsComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("EyebrowsMesh"));
+	EyebrowsComponent->SetupAttachment(GetMesh());
+
+	BeardComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Beard"));
+	BeardComponent->SetupAttachment(GetMesh());
+
+	MoustacheComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Moustache"));
+	MoustacheComponent->SetupAttachment(GetMesh());
+
+	SideburnComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Sideburn"));
+	SideburnComponent->SetupAttachment(GetMesh());
+
+	HairComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HairMesh"));
+	HairComponent->SetupAttachment(GetMesh());
+
+	TopknotComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Topknot"));
+	TopknotComponent->SetupAttachment(GetMesh());
+
+	LegArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("LegArmour"));
+	LegArmourComponent->SetupAttachment(GetMesh());
+
+	BootsArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsArmour"));
+	BootsArmourComponent->SetupAttachment(GetMesh());
+
+	BeltArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BeltArmour"));
+	BeltArmourComponent->SetupAttachment(GetMesh());
+
+	BracersArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BracersArmour"));
+	BracersArmourComponent->SetupAttachment(GetMesh());
+
+	BackArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BackArmour"));
+	BackArmourComponent->SetupAttachment(GetMesh());
+
+	GloveArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GloveArmour"));
+	GloveArmourComponent->SetupAttachment(GetMesh());
+
+	ChestArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestArmour"));
+	ChestArmourComponent->SetupAttachment(GetMesh());
+
+	ShoulderArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ShoulderArmour"));
+	ShoulderArmourComponent->SetupAttachment(GetMesh());
+
+	HelmetArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetArmour"));
+	HelmetArmourComponent->SetupAttachment(GetMesh());
+
+
 
 	MinZoomLength = 100.f;
 	MaxZoomLength = 600.f;

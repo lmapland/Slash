@@ -106,8 +106,6 @@ void AEnemy::BeginPlay()
 	HideHealthBar();
 	MoveToTarget(PatrolTarget);
 	SpawnDefaultWeapons();
-
-	//Tags.Add(FName("Group2"));
 }
 
 void AEnemy::Die_Implementation()
