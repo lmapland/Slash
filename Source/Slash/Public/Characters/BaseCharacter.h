@@ -80,6 +80,15 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* AttackMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* GatheringMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* DodgeMontage;
+	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* EquipMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	AActor* CombatTarget;

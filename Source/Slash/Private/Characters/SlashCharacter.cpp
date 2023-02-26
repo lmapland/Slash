@@ -326,12 +326,12 @@ void ASlashCharacter::Interact()
 			if (ToPickUp)
 			{
 				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-				if (AnimInstance && AttackMontage && ToPickUp->Pickable())
+				if (AnimInstance && GatheringMontage && ToPickUp->Pickable())
 				{
 					UpdateActionState(EActionState::EAS_PickingUp);
 					ToPickUp->Pick();
-					AnimInstance->Montage_Play(AttackMontage, ToPickUp->AnimSpeed);
-					AnimInstance->Montage_JumpToSection(ToPickUp->AnimationToPlay, AttackMontage);
+					AnimInstance->Montage_Play(GatheringMontage, ToPickUp->AnimSpeed);
+					AnimInstance->Montage_JumpToSection(ToPickUp->AnimationToPlay, GatheringMontage);
 					
 					ItemPickedUp = ToPickUp;
 					GetWorldTimerManager().SetTimer(DestroyPickupTimer, this, &ASlashCharacter::RemovePickedUpItem, 2.f);
@@ -370,14 +370,14 @@ void ASlashCharacter::Dodge()
 	if (IsOccupied()) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && AttackMontage && SlashOverlay && Attributes && Attributes->UseStaminaIfAble(DodgeCost))
+	if (AnimInstance && DodgeMontage && SlashOverlay && Attributes && Attributes->UseStaminaIfAble(DodgeCost))
 	{
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-		AnimInstance->Montage_Play(AttackMontage, 1.4f);
+		AnimInstance->Montage_Play(DodgeMontage, 1.4f);
 
 		FName SectionName = FName("Dodge");
 		UpdateActionState(EActionState::EAS_Dodging);
-		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, DodgeMontage);
 	}
 }
 
@@ -423,7 +423,7 @@ int32 ASlashCharacter::PlayAttackMontage()
 // "Arm" or "Disarm" depending on the current status
 void ASlashCharacter::Equip() // r
 {
-	if (ActionState == EActionState::EAS_Unoccupied && AttackMontage)
+	if (ActionState == EActionState::EAS_Unoccupied && EquipMontage && EquippedWeapon)
 	{
 		if (bIsArmed) // could also check if CharacterState != ECS_Unequipped && EquippedWeapon
 		{
@@ -432,8 +432,8 @@ void ASlashCharacter::Equip() // r
 			if (AnimInstance)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Character is armed; playing Disarm animation"));
-				AnimInstance->Montage_Play(AttackMontage, 1.f);
-				AnimInstance->Montage_JumpToSection(FName("Disarm"), AttackMontage);
+				AnimInstance->Montage_Play(EquipMontage, 1.f);
+				AnimInstance->Montage_JumpToSection(FName("Disarm"), EquipMontage);
 				UpdateActionState(EActionState::EAS_Equipping); // so the char can't move
 			}
 
@@ -447,8 +447,8 @@ void ASlashCharacter::Equip() // r
 			if (AnimInstance)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Character is Not armed; playing Arm animation"));
-				AnimInstance->Montage_Play(AttackMontage, 1.f);
-				AnimInstance->Montage_JumpToSection(FName("Arm"), AttackMontage);
+				AnimInstance->Montage_Play(EquipMontage, 1.f);
+				AnimInstance->Montage_JumpToSection(FName("Arm"), EquipMontage);
 				UpdateActionState(EActionState::EAS_Equipping); // so the char can't move
 			}
 

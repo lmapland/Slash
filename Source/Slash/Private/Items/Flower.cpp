@@ -6,6 +6,6 @@
 AFlower::AFlower()
 {
 	ItemName = FName("Flower");
-	AnimationToPlay = FName("PickUp");
+	AnimationToPlay = FName("Gathering");
 	AnimSpeed = 2.f;
 }
