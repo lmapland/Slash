@@ -84,7 +84,14 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void RequestLevelUp();
+
+	// this function will actually take 1 or more parameters
+	UFUNCTION(BlueprintCallable)
+	void ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd);
 	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	float InteractDistance = 200.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float TargetArmLength = 300.f;

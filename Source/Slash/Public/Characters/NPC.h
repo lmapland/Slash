@@ -3,25 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "GameFramework/Character.h"
 #include "NPC.generated.h"
 
+class USkeletalMeshComponent;
+
+
 UCLASS()
-class SLASH_API ANPC : public AActor
+class SLASH_API ANPC : public ACharacter
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
 	ANPC();
-	void Interact(class USlashOverlay* SlashOverlay);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-private:
-	//UPROPERTY()
-	//TArray<ItemsForSale> SaleItems;
-
+	
 };

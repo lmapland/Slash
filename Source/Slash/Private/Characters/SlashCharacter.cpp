@@ -24,6 +24,8 @@
 #include "Items/MiningRock.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Interfaces/Interactable.h"
 
 // public
 ASlashCharacter::ASlashCharacter()
@@ -176,7 +178,7 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Look);
 
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Jump);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Interact);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ASlashCharacter::Interact);
 		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Dodge);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Attack);
 		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ASlashCharacter::Equip);
@@ -360,6 +362,39 @@ void ASlashCharacter::Interact()
 						}
 					}
 				}
+			}
+		}
+	}
+	else
+	{
+		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+		// ObjectTypeQuery3 is 'Pawn' - if I expand this system to line trace to look for items as well (AActors) this will need to change
+		ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery3);
+		TArray<AActor*> ActorsToIgnore;
+		ActorsToIgnore.Add(this);
+		FHitResult HitResult;
+
+		// how to get the camera location & rotation in world space
+		FVector MouseOrigin = ViewCamera->GetComponentLocation();
+		FRotator MouseRotation = ViewCamera->GetComponentRotation();
+		FVector DirectionOfLineTrace =  MouseRotation.Vector() * (InteractDistance + CameraBoom->TargetArmLength);
+
+		UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), MouseOrigin, MouseOrigin + DirectionOfLineTrace, ObjectTypes, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true);
+		//UKismetSystemLibrary::DrawDebugLine(this, MouseOrigin, MouseOrigin + DirectionOfLineTrace, FLinearColor::Black, 180.f);
+
+		// LineTrace hit nothing. Do nothing.
+		if (!HitResult.bBlockingHit)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("In Interact(): Performed line trace & hit nothing"));
+			return;
+		}
+
+		if (SlashOverlay && Attributes)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("In Interact(): Performed line trace & hit something: %s"), *HitResult.GetActor()->GetName());
+			if (IInteractable* Interactable = Cast<IInteractable>(HitResult.GetActor()))
+			{
+				Interactable->Interact(SlashOverlay, Attributes);
 			}
 		}
 	}
@@ -597,6 +632,10 @@ void ASlashCharacter::RequestLevelUp()
 	}
 }
 
+void ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd)
+{
+
+}
 // private
 void ASlashCharacter::InitializeSlashOverlay()
 {

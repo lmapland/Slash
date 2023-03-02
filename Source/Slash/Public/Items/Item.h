@@ -63,6 +63,33 @@ protected:
 	FName ItemName;
 
 	EItemState ItemState = EItemState::EIS_Equipped;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Display")
+	FName DisplayName = "Item";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Display")
+	UTexture2D* DisplayIcon;
+	
+	/* 
+	* Here we have a pair of matching arrays:
+	* We have the array of Item class refs and the array of amounts
+	*  An item could cost the user (SellToCustomer), for example,
+	*  Item: Gold; Amount: 1000 + Item: Soul; Amount: 5
+	*  Or really any combination
+	* And an item can be bought from the customer for the same.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cost")
+	TArray<TSubclassOf<AItem>> SellToCustomerItems;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cost")
+	TArray<TSubclassOf<AItem>> SellToCustomerAmounts;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cost")
+	TArray<TSubclassOf<AItem>> BuyFromCustomerItems;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cost")
+	TArray<TSubclassOf<AItem>> BuyFromCustomerAmounts;
+	
 
 private:
 	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))

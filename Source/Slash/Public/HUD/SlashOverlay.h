@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "SlashOverlay.generated.h"
 
+class AItem;
+
 /**
  * 
  */
@@ -30,6 +32,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
 	void UpdateTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
+	void ShowMerchantMenu(const TArray<TSubclassOf<AItem>>& ItemsToSell, const TArray<TSubclassOf<AItem>>& ItemsToBuy);
+	
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HealthProgressBar;

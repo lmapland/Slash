@@ -1,6 +1,8 @@
 I am not a design-oriented person, and I hestitate to call this a style guide. But perhaps it's accurate that this document will help me remember certain style-related decisions I've made in order to keep the temporary UI consistent over time.
 
 Font: Montserrat-Medium
+Font size:
+* Normal: 14
 A border of 30 units from the side of a container should be observed
 
 The following should use the widgets instead of being placed directly into a container (Widget):
