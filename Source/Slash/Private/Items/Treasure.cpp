@@ -11,6 +11,6 @@ void ATreasure::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 
 	if (PickupInterface)
 	{
-		PickupInterface->AddGold(this);
+		PickupInterface->AddItem(ItemID, Amount);
 	}
 }

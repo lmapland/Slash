@@ -14,14 +14,12 @@
 #include "Components/AttributeComponent.h"
 #include "GroomComponent.h"
 #include "Items/Item.h"
-#include "Items/Pickup.h"
 #include "Items/Weapon.h"
-#include "Items/Soul.h"
+#include "Items/LandscapeResource.h"
+#include "Items/Soul.h" // TODO Delete these 4
 #include "Items/Treasure.h"
 #include "Items/HealthPotion.h"
 #include "Items/StaminaPotion.h"
-#include "Items/Flower.h"
-#include "Items/MiningRock.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -228,6 +226,11 @@ void ASlashCharacter::SetOverlappingItem(AItem* Item)
 	OverlappingItem = Item;
 }
 
+void ASlashCharacter::SetOverlappingResource(ALandscapeResource* Resource)
+{
+	OverlappingResource = Resource;
+}
+
 void ASlashCharacter::AddSouls(ASoul* Soul)
 {
 	if (Attributes && SlashOverlay)
@@ -242,7 +245,7 @@ void ASlashCharacter::AddGold(ATreasure* Treasure)
 {
 	if (Attributes && SlashOverlay)
 	{
-		Attributes->AddGold(Treasure->GetGold());
+		Attributes->AddGold(Treasure->GetAmount());
 		SlashOverlay->SetGold(Attributes->GetGold());
 	}
 }
@@ -263,6 +266,10 @@ void ASlashCharacter::AddStamina(AStaminaPotion* StamPot)
 		Attributes->AddStamina(StamPot->GetAmount());
 		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
 	}
+}
+
+void ASlashCharacter::AddItem(int ItemID, int Amount)
+{
 }
 
 // protected
@@ -322,47 +329,26 @@ void ASlashCharacter::Interact()
 			}
 			Equip1HWeapon(Weapon); // need to handle 2-handers eventually here
 		}
-		else
+	}
+	else if (OverlappingResource)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && GatheringMontage && OverlappingResource->Pickable())
 		{
-			APickup* ToPickUp = Cast<APickup>(OverlappingItem);
-			if (ToPickUp)
+			UpdateActionState(EActionState::EAS_PickingUp);
+			OverlappingResource->Pick();
+			AnimInstance->Montage_Play(GatheringMontage, OverlappingResource->AnimSpeed);
+			AnimInstance->Montage_JumpToSection(OverlappingResource->AnimationToPlay, GatheringMontage);
+
+			/* How the code will eventually go; though I might actually call AddItem() and have that execute this code
+			if (Inventory)
 			{
-				UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-				if (AnimInstance && GatheringMontage && ToPickUp->Pickable())
+				int32 Overflow = Inventory.AddLenient(OverlappingResource->GetItemID(), OverlappingResource->GetAmount());
+				if (Overflow > 0)
 				{
-					UpdateActionState(EActionState::EAS_PickingUp);
-					ToPickUp->Pick();
-					AnimInstance->Montage_Play(GatheringMontage, ToPickUp->AnimSpeed);
-					AnimInstance->Montage_JumpToSection(ToPickUp->AnimationToPlay, GatheringMontage);
-					
-					ItemPickedUp = ToPickUp;
-					GetWorldTimerManager().SetTimer(DestroyPickupTimer, this, &ASlashCharacter::RemovePickedUpItem, 2.f);
-
-					/* I would love to move in this direction
-					if (Attributes && SlashOverlay)
-					{
-						ItemPickedUp->UpdateAttributes(Attributes);
-						ItemPickedUp->UpdateOverlay(SlashOverlay);
-					}*/
-
-					if (ItemPickedUp->GetItemName() == FName("Flower"))
-					{
-						if (Attributes && SlashOverlay)
-						{
-							Attributes->AddFlowers(ItemPickedUp->GetAmount());
-							SlashOverlay->SetFlowers(Attributes->GetFlowers());
-						}
-					}
-					else if (ItemPickedUp->GetItemName() == FName("Ore"))
-					{
-						if (Attributes && SlashOverlay)
-						{
-							Attributes->AddOre(ItemPickedUp->GetAmount());
-							SlashOverlay->SetOre(Attributes->GetOre());
-						}
-					}
+					// spawn via class ref & drop amount on ground
 				}
-			}
+			}*/
 		}
 	}
 	else
@@ -632,7 +618,7 @@ void ASlashCharacter::RequestLevelUp()
 	}
 }
 
-void ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd)
+void ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd, int Quantity)
 {
 
 }
@@ -670,12 +656,6 @@ void ASlashCharacter::SetHUDHealth()
 bool ASlashCharacter::IsOccupied()
 {
 	return ActionState != EActionState::EAS_Unoccupied;
-}
-
-void ASlashCharacter::RemovePickedUpItem()
-{
-	ItemPickedUp->Destroy();
-	ItemPickedUp = nullptr;
 }
 
 void ASlashCharacter::UpdateActionState(EActionState State)

@@ -23,8 +23,7 @@ class UParticleSystem;
 class APlayerController;
 class Soul;
 class ATreasure;
-class AFlower;
-class AMiningRock;
+class ALandscapeResource;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
@@ -39,10 +38,12 @@ public:
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetOverlappingItem(AItem* Item) override;
+	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;
 	virtual void AddSouls(ASoul* Soul) override;
 	virtual void AddGold(ATreasure* Treasure) override;
 	virtual void AddHealth(AHealthPotion* HealthPot) override;
 	virtual void AddStamina(AStaminaPotion* StamPot) override;
+	virtual void AddItem(int ItemID, int Amount) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -87,7 +88,7 @@ protected:
 
 	// this function will actually take 1 or more parameters
 	UFUNCTION(BlueprintCallable)
-	void ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd);
+	void ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd, int Quantity = 1);
 	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
@@ -263,10 +264,11 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
 
+	UPROPERTY(VisibleInstanceOnly)
+	ALandscapeResource* OverlappingResource;
+
 	FTimerHandle DestroyPickupTimer;
 	FTimerHandle InitilizationTimer;
-
-	APickup* ItemPickedUp;
 
 	bool bIsArmed; // Character currently has a weapon and it is in their hand
 

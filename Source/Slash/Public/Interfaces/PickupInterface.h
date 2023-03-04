@@ -23,8 +23,10 @@ class SLASH_API IPickupInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	virtual void SetOverlappingItem(class AItem* Item);
+	virtual void SetOverlappingResource(class ALandscapeResource* Resource);
 	virtual void AddSouls(class ASoul* Soul);
 	virtual void AddGold(class ATreasure* Treasure);
 	virtual void AddHealth(class AHealthPotion* HealthPot);
 	virtual void AddStamina(class AStaminaPotion* StamPot);
+	virtual void AddItem(int ItemID, int Amount);
 };
