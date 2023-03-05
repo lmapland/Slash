@@ -18,11 +18,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class UGroomComponent;
 class AItem;
-class APickup;
 class UParticleSystem;
 class APlayerController;
-class Soul;
-class ATreasure;
 class ALandscapeResource;
 
 UCLASS()
@@ -39,10 +36,6 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;
-	virtual void AddSouls(ASoul* Soul) override;
-	virtual void AddGold(ATreasure* Treasure) override;
-	virtual void AddHealth(AHealthPotion* HealthPot) override;
-	virtual void AddStamina(AStaminaPotion* StamPot) override;
 	virtual void AddItem(int ItemID, int Amount) override;
 
 protected:

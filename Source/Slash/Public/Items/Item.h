@@ -20,11 +20,9 @@ class SLASH_API AItem : public AActor
 	
 public:	
 	AItem();
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	template<typename T>
-	T Avg(T First, T Second);
+	void PickedUp(); // finalize the pickup (destroy this object)
+	void PickUp(); // Pick the object, causing it to be destroyed
 
 	UFUNCTION()
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -56,11 +54,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	class UNiagaraComponent* ItemParticles;
 	
-	UPROPERTY(VisibleAnywhere, Category = "Item Properties")
-	FName ItemName;
-	
-	UPROPERTY(VisibleAnywhere, Category = "Item Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	int32 ItemID;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	int32 Amount = 1;
+
+	UPROPERTY(EditAnywhere, Category = "Item Properties")
+	class USoundBase* PickupSound;
 
 	EItemState ItemState = EItemState::EIS_Equipped;
 
@@ -70,18 +71,15 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	float RunningTime;
-	
+
+	FTimerHandle DestroySelfTimer;
+
 	// added when the Soul was added to be initialized and played when the Soul is overlapped with
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* PickupEffect;
 
 public:
 	FORCEINLINE UStaticMeshComponent* GetMesh() const { return ItemMesh; }
-	FORCEINLINE FName GetItemName() const { return ItemName; }
+	FORCEINLINE int32 GetAmount() const { return Amount; }
+	FORCEINLINE int32 GetItemID() const { return ItemID; }
 };
-
-template<typename T>
-inline T AItem::Avg(T First, T Second)
-{
-	return (First + Second) / 2;
-}

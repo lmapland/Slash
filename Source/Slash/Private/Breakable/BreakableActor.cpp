@@ -3,8 +3,8 @@
 
 #include "Breakable/BreakableActor.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
-#include "Items/Treasure.h"
 #include "Components/CapsuleComponent.h"
+#include "Items/Item.h"
 
 ABreakableActor::ABreakableActor()
 {
@@ -27,21 +27,17 @@ void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint, AActor* 
 {
 	if (TreasureClasses.Num() > 0)
 	{
-		GetWorld()->SpawnActor<ATreasure>(TreasureClasses[FMath::RandRange(0, TreasureClasses.Num() - 1)], GetActorLocation(), GetActorRotation());
+		GetWorld()->SpawnActor<AItem>(TreasureClasses[FMath::RandRange(0, TreasureClasses.Num() - 1)], GetActorLocation(), GetActorRotation());
 	}
 }
-
 
 void ABreakableActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//GeometryCollection->OnChaosBreakEvent.AddDynamic(this, &)
 }
 
 void ABreakableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 

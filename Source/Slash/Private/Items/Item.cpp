@@ -4,10 +4,10 @@
 #include "Items/Item.h"
 #include "Slash/DebugMacros.h"
 #include "Components/SphereComponent.h"
-#include "Items/Instant.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "Interfaces/PickupInterface.h"
 
 
 // Sets default values
@@ -84,4 +84,15 @@ void AItem::Tick(float DeltaTime)
 		AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
 	}
 
+}
+
+void AItem::PickedUp()
+{
+	SpawnPickupSystem();
+	Destroy();
+}
+
+void AItem::PickUp()
+{
+	GetWorldTimerManager().SetTimer(DestroySelfTimer, this, &AItem::PickedUp, 0.1f);
 }

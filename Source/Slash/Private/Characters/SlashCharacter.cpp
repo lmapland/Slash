@@ -16,10 +16,6 @@
 #include "Items/Item.h"
 #include "Items/Weapon.h"
 #include "Items/LandscapeResource.h"
-#include "Items/Soul.h" // TODO Delete these 4
-#include "Items/Treasure.h"
-#include "Items/HealthPotion.h"
-#include "Items/StaminaPotion.h"
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -231,45 +227,19 @@ void ASlashCharacter::SetOverlappingResource(ALandscapeResource* Resource)
 	OverlappingResource = Resource;
 }
 
-void ASlashCharacter::AddSouls(ASoul* Soul)
-{
-	if (Attributes && SlashOverlay)
-	{
-		Attributes->AddSouls(Soul->GetSouls());
-		SlashOverlay->SetSouls(Attributes->GetSouls());
-		SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
-	}
-}
-
-void ASlashCharacter::AddGold(ATreasure* Treasure)
-{
-	if (Attributes && SlashOverlay)
-	{
-		Attributes->AddGold(Treasure->GetAmount());
-		SlashOverlay->SetGold(Attributes->GetGold());
-	}
-}
-
-void ASlashCharacter::AddHealth(AHealthPotion* HealthPot)
-{
-	if (Attributes && SlashOverlay)
-	{
-		Attributes->AddHealth(HealthPot->GetAmount());
-		SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-	}
-}
-
-void ASlashCharacter::AddStamina(AStaminaPotion* StamPot)
-{
-	if (Attributes && SlashOverlay)
-	{
-		Attributes->AddStamina(StamPot->GetAmount());
-		SlashOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
-	}
-}
-
 void ASlashCharacter::AddItem(int ItemID, int Amount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("ItemID:Amount %i, %i "), ItemID, Amount);
+
+	/* How the code will eventually go; though I might actually call AddItem() and have that execute this code
+	if (Inventory)
+	{
+		int32 Overflow = Inventory.AddLenient(ItemID->GetItemID(), ItemID->GetAmount());
+		if (Overflow > 0)
+		{
+			// spawn via class ref & drop amount on ground
+		}
+	}*/
 }
 
 // protected
@@ -320,14 +290,25 @@ void ASlashCharacter::Interact()
 {
 	if (OverlappingItem)
 	{
-		AWeapon* Weapon = Cast <AWeapon>(OverlappingItem);
-		if (Weapon)
+		AItem* Item = Cast<AItem>(OverlappingItem);
+		if (Item)
 		{
-			if (EquippedWeapon)
+			// TODO delete this: overlapping with a weapon should put it into the inventory just like all other items
+			// keeping it for now, though, until I actually get the inventory working & also using items
+			AWeapon* Weapon = Cast<AWeapon>(OverlappingItem);
+			if (Weapon)
 			{
-				EquippedWeapon->Destroy();
+				if (EquippedWeapon)
+				{
+					EquippedWeapon->Destroy();
+				}
+				Equip1HWeapon(Weapon);
 			}
-			Equip1HWeapon(Weapon); // need to handle 2-handers eventually here
+			else
+			{
+				Item->PickUp();
+				AddItem(Item->GetItemID(), Item->GetAmount());
+			}
 		}
 	}
 	else if (OverlappingResource)
@@ -339,19 +320,9 @@ void ASlashCharacter::Interact()
 			OverlappingResource->Pick();
 			AnimInstance->Montage_Play(GatheringMontage, OverlappingResource->AnimSpeed);
 			AnimInstance->Montage_JumpToSection(OverlappingResource->AnimationToPlay, GatheringMontage);
-
-			/* How the code will eventually go; though I might actually call AddItem() and have that execute this code
-			if (Inventory)
-			{
-				int32 Overflow = Inventory.AddLenient(OverlappingResource->GetItemID(), OverlappingResource->GetAmount());
-				if (Overflow > 0)
-				{
-					// spawn via class ref & drop amount on ground
-				}
-			}*/
 		}
 	}
-	else
+	else // is user trying to interact with an NPC?
 	{
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 		// ObjectTypeQuery3 is 'Pawn' - if I expand this system to line trace to look for items as well (AActors) this will need to change

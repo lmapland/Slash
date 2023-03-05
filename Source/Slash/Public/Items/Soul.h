@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Items/Instant.h"
+#include "Items/Item.h"
 #include "Soul.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class SLASH_API ASoul : public AInstant
+class SLASH_API ASoul : public AItem
 {
 	GENERATED_BODY()
 
@@ -23,15 +23,12 @@ protected:
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	
 private:
-	UPROPERTY(EditAnywhere, Category = "Soul Properties")
-	int32 SoulCount = 1;
-
 	double DesiredZ;
 
 	UPROPERTY(EditAnywhere)
 	float DriftRate = -15.f;
 
 public:
-	FORCEINLINE int32 GetSouls() const { return SoulCount; }
-	FORCEINLINE void SetSouls(int32 Value) { SoulCount = Value; }
+	FORCEINLINE int32 GetSouls() const { return Amount; }
+	FORCEINLINE void SetSouls(int32 Value) { Amount = Value; }
 };

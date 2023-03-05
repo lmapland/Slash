@@ -11,24 +11,6 @@ void IPickupInterface::SetOverlappingItem(class AItem* Item)
 
 void IPickupInterface::SetOverlappingResource(class ALandscapeResource* Resource)
 {
-}
-
-void IPickupInterface::AddSouls(class ASoul* Soul)
-{
-
-}
-void IPickupInterface::AddGold(class ATreasure* Treasure)
-{
-
-}
-
-void IPickupInterface::AddHealth(class AHealthPotion* HealthPot)
-{
-
-}
-
-void IPickupInterface::AddStamina(class AStaminaPotion* StamPot)
-{
 
 }
 
