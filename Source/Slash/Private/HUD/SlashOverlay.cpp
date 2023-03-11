@@ -71,3 +71,22 @@ void USlashOverlay::OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 Nex
 {
 	ShowTabWidget(Souls, SoulsNeeded, NextLevel);
 }
+
+void USlashOverlay::UpdateAttribute(int32 ItemID, float Value)
+{
+	switch (ItemID)
+	{
+	case 0:
+		SetHealthBarPercent(Value);
+		break;
+	case 1:
+		SetStaminaBarPercent(Value);
+		break;
+	case 2:
+		SetSouls((int32)Value);
+		break;
+	case 3:
+		SetGold((int32)Value);
+		break;
+	}
+}

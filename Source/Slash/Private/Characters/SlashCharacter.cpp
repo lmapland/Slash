@@ -2,16 +2,19 @@
 
 
 #include "Characters/SlashCharacter.h"
+#include "Animation/AnimInstance.h"
 #include "HUD/SlashHUD.h"
 #include "HUD/SlashOverlay.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/AttributeComponent.h"
+#include "Components/PrimitiveComponent.h"
+#include "Components/Inventory.h"
 #include "GroomComponent.h"
 #include "Items/Item.h"
 #include "Items/Weapon.h"
@@ -229,17 +232,28 @@ void ASlashCharacter::SetOverlappingResource(ALandscapeResource* Resource)
 
 void ASlashCharacter::AddItem(int ItemID, int Amount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ItemID:Amount %i, %i "), ItemID, Amount);
 
-	/* How the code will eventually go; though I might actually call AddItem() and have that execute this code
 	if (Inventory)
 	{
-		int32 Overflow = Inventory.AddLenient(ItemID->GetItemID(), ItemID->GetAmount());
-		if (Overflow > 0)
+		if (Inventory->IsAttribute(ItemID) && Attributes && SlashOverlay)
 		{
-			// spawn via class ref & drop amount on ground
+			Attributes->AddAttribute(ItemID, Amount);
+			SlashOverlay->UpdateAttribute(ItemID, Amount);
 		}
-	}*/
+		else
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("ASlashCharacter::AddItem(): (AddLenient) - (ItemID,Amount): (%i,%i) "), ItemID, Amount);
+			TSubclassOf<AItem> ItemRef = Inventory->AddLenient(ItemID, Amount);
+			if (Amount > 0)
+			{
+				FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f); // move it away from character & raise it up a bit
+				AItem* Spawned = GetWorld()->SpawnActor<AItem>(ItemRef, LocationToSpawn, GetActorRotation());
+				Spawned->SetAmount(Amount);
+				Spawned->GetMesh()->SetSimulatePhysics(true);
+				Spawned->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
+			}
+		}
+	}
 }
 
 // protected
@@ -258,6 +272,8 @@ void ASlashCharacter::BeginPlay()
 			Subsystem->AddMappingContext(CharMappingContext, 0);
 		}
 	}
+
+	Inventory->SetDataTable(InventoryDataTable);
 
 	GetWorldTimerManager().SetTimer(InitilizationTimer, this, &ASlashCharacter::InitializeSlashOverlay, 2.f);
 }
@@ -318,6 +334,7 @@ void ASlashCharacter::Interact()
 		{
 			UpdateActionState(EActionState::EAS_PickingUp);
 			OverlappingResource->Pick();
+			AddItem(OverlappingResource->GetItemID(), OverlappingResource->GetAmount());
 			AnimInstance->Montage_Play(GatheringMontage, OverlappingResource->AnimSpeed);
 			AnimInstance->Montage_JumpToSection(OverlappingResource->AnimationToPlay, GatheringMontage);
 		}

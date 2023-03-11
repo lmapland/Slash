@@ -82,4 +82,5 @@ public:
 	FORCEINLINE UStaticMeshComponent* GetMesh() const { return ItemMesh; }
 	FORCEINLINE int32 GetAmount() const { return Amount; }
 	FORCEINLINE int32 GetItemID() const { return ItemID; }
+	FORCEINLINE void SetAmount(int32 Value) { Amount = Value; } // should probably have bounds checking TODO
 };

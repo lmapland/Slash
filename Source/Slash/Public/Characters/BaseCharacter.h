@@ -11,6 +11,8 @@
 
 class AWeapon;
 class UAttributeComponent;
+class UInventory;
+class UDataTable;
 class UAnimMontage;
 class USoundBase;
 class UParticleSystem;
@@ -68,6 +70,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAttributeComponent* Attributes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UDataTable* InventoryDataTable;
+		
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UInventory* Inventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
 	AWeapon* EquippedWeapon;

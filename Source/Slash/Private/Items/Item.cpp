@@ -88,11 +88,12 @@ void AItem::Tick(float DeltaTime)
 
 void AItem::PickedUp()
 {
-	SpawnPickupSystem();
 	Destroy();
 }
 
 void AItem::PickUp()
 {
-	GetWorldTimerManager().SetTimer(DestroySelfTimer, this, &AItem::PickedUp, 0.1f);
+	SpawnPickupSystem();
+	PickedUp();
+	//GetWorldTimerManager().SetTimer(DestroySelfTimer, this, &AItem::PickedUp, 0.1f);
 }

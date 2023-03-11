@@ -25,6 +25,7 @@ public:
 	void SetOre(int32 Ore);
 	void SetLevelInfo(int32 Level, float LevelPercent);
 	void OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
+	void UpdateAttribute(int32 ItemID, float Value);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
 	void ShowTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);

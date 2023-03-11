@@ -73,16 +73,6 @@ void UAttributeComponent::AddGold(int32 Value)
 	Gold += Value;
 }
 
-void UAttributeComponent::AddFlowers(int32 Value)
-{
-	Flowers += Value;
-}
-
-void UAttributeComponent::AddOre(int32 Value)
-{
-	Ore += Value;
-}
-
 void UAttributeComponent::LevelUp()
 {
 	// User has clicked the button. First we verify that the user has enough Souls to level, then do it
@@ -94,4 +84,30 @@ void UAttributeComponent::LevelUp()
 
 	Souls -= SoulsPerLevel[Level];
 	Level += 1;
+}
+
+float UAttributeComponent::AddAttribute(int32 ItemID, int32 Amount)
+{
+	switch (ItemID)
+	{
+	case 0:
+		AddHealth(Amount);
+		return Health / MaxHealth;
+		break;
+	case 1:
+		AddStamina(Amount);
+		return Stamina / MaxStamina;
+		break;
+	case 2:
+		AddSouls(Amount);
+		return (float)Souls;
+		break;
+	case 3:
+		AddGold(Amount);
+		return (float)Gold;
+		break;
+	default:
+		return 0;
+		break;
+	}
 }
