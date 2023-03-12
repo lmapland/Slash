@@ -68,6 +68,36 @@ int32 UInventory::Num()
 	return MaxSlots;
 }
 
+void UInventory::Swap(int32 Slot1, int32 Slot2)
+{
+	FInventorySlot* TempSlot;
+	TempSlot = Slots[Slot1];
+	Slots[Slot1] = Slots[Slot2];
+	Slots[Slot2] = TempSlot;
+}
+
+int UInventory::Stack(int32 Slot1, int32 Slot2)
+{
+	if (Slot1 == Slot2) return 0; // base case; this prevents duplication
+
+	FInventorySlot* Source = Slots[Slot1];
+	FInventorySlot* Dest = Slots[Slot2];
+
+	int32 ToAdd = (Source->CurrentStack + Dest->CurrentStack > Dest->MaxStack) ? Dest->MaxStack - Dest->CurrentStack : Source->CurrentStack;
+
+	Dest->CurrentStack += ToAdd;
+	Source->CurrentStack -= ToAdd;
+
+	// should probably have a function on FInventorySlot called Empty() which does the necessary setup TODO
+	if (Source->CurrentStack == 0) // Empty this slot
+	{
+		Source->MaxStack = 0;
+		Source->ItemID = -1;
+	}
+
+	return Source->CurrentStack;
+}
+
 bool UInventory::IsAttribute(int32 ItemID)
 {
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);

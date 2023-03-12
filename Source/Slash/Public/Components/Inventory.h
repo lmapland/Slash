@@ -84,6 +84,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int32 Num();
 
+	UFUNCTION(BlueprintCallable)
+	void Swap(int32 Slot1, int32 Slot2);
+
+	UFUNCTION(BlueprintCallable)
+	int Stack(int32 Slot1, int32 Slot2);
+
 	bool IsAttribute(int32 ItemID);
 	void SetDataTable(UDataTable* DT);
 
