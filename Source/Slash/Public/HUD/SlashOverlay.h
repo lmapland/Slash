@@ -21,8 +21,6 @@ public:
 	void SetStaminaBarPercent(float Percent);
 	void SetGold(int32 Gold);
 	void SetSouls(int32 Souls);
-	void SetFlowers(int32 Flowers);
-	void SetOre(int32 Ore);
 	void SetLevelInfo(int32 Level, float LevelPercent);
 	void OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
 	void UpdateAttribute(int32 ItemID, float Value);
@@ -48,12 +46,6 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* SoulsText;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* FlowersText;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* OreText;
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LevelText;

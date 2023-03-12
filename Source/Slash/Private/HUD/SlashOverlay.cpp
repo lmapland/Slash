@@ -37,23 +37,6 @@ void USlashOverlay::SetSouls(int32 Souls)
 	}
 }
 
-void USlashOverlay::SetFlowers(int32 Flowers)
-{
-	if (FlowersText)
-	{
-		FlowersText->SetText(FText::FromString(FString::Printf(TEXT("%i"), Flowers)));
-	}
-
-}
-
-void USlashOverlay::SetOre(int32 Ore)
-{
-	if (OreText)
-	{
-		OreText->SetText(FText::FromString(FString::Printf(TEXT("%i"), Ore)));
-	}
-}
-
 void USlashOverlay::SetLevelInfo(int32 Level, float LevelPercent)
 {
 	if (LevelText)

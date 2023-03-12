@@ -58,8 +58,6 @@ public:
 	bool IsAlive();
 	void AddSouls(int32 Value);
 	void AddGold(int32 Value);
-	void AddFlowers(int32 Value);
-	void AddOre(int32 Value);
 	void LevelUp();
 	float AddAttribute(int32 ItemID, int32 Amount);
 

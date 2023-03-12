@@ -625,8 +625,6 @@ void ASlashCharacter::InitializeSlashOverlay()
 				SlashOverlay->SetStaminaBarPercent(1.f); // Attributes->GetStaminaPercent());
 				SlashOverlay->SetGold(0);
 				SlashOverlay->SetSouls(0);
-				SlashOverlay->SetOre(0);
-				SlashOverlay->SetFlowers(0);
 				SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 			}
 		}
