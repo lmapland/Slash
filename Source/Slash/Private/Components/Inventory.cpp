@@ -56,19 +56,16 @@ TSubclassOf<AItem> UInventory::AddLenient(int32 ItemID, int32& Amount)
 	return Row->class_ref;
 }
 
-void UInventory::AddToStack(const int32& ItemID, int32& LeftToAdd)
+FInventorySlot UInventory::GetSlot(int32 index)
 {
-	for (int i = 0; i < MaxSlots; i++)
-	{
-		if (Slots[i]->ItemID == ItemID && Slots[i]->CurrentStack < Slots[i]->MaxStack)
-		{
-			int32 ToAdd = (Slots[i]->MaxStack - Slots[i]->CurrentStack) > LeftToAdd ? LeftToAdd : (Slots[i]->MaxStack - Slots[i]->CurrentStack);
-			LeftToAdd -= ToAdd;
-			Slots[i]->CurrentStack += ToAdd;
-		}
+	if (index < 0 || index >= Slots.Num()) return *(new FInventorySlot);
+	
+	return *Slots[index];
+}
 
-		if (LeftToAdd <= 0) return;
-	}
+int32 UInventory::Num()
+{
+	return MaxSlots;
 }
 
 bool UInventory::IsAttribute(int32 ItemID)
@@ -104,6 +101,21 @@ bool UInventory::HasSpace(int32 ItemID, int32 Amount, int32 MaxStack)
 		if (LeftToFind <= 0) return true;
 	}
 	return false;
+}
+
+void UInventory::AddToStack(const int32& ItemID, int32& LeftToAdd)
+{
+	for (int i = 0; i < MaxSlots; i++)
+	{
+		if (Slots[i]->ItemID == ItemID && Slots[i]->CurrentStack < Slots[i]->MaxStack)
+		{
+			int32 ToAdd = (Slots[i]->MaxStack - Slots[i]->CurrentStack) > LeftToAdd ? LeftToAdd : (Slots[i]->MaxStack - Slots[i]->CurrentStack);
+			LeftToAdd -= ToAdd;
+			Slots[i]->CurrentStack += ToAdd;
+		}
+
+		if (LeftToAdd <= 0) return;
+	}
 }
 
 void UInventory::SetDataTable(UDataTable* DT)

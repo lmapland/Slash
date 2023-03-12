@@ -71,9 +71,19 @@ class SLASH_API UInventory : public UActorComponent
 
 public:
 	UInventory();
+
+	UFUNCTION(BlueprintCallable)
 	bool AddStrict(int32 ItemID, int32 Amount);
+
+	UFUNCTION(BlueprintCallable)
 	TSubclassOf<AItem> AddLenient(int32 ItemID, int32& Amount);
-	void AddToStack(const int32& ItemID, int32& LeftToAdd);
+
+	UFUNCTION(BlueprintCallable)
+	FInventorySlot GetSlot(int32 index);
+	
+	UFUNCTION(BlueprintCallable)
+	int32 Num();
+
 	bool IsAttribute(int32 ItemID);
 	void SetDataTable(UDataTable* DT);
 
@@ -82,6 +92,7 @@ protected:
 
 private:
 	bool HasSpace(int32 ItemID, int32 Amount, int32 MaxStack);
+	void AddToStack(const int32& ItemID, int32& LeftToAdd);
 	void AddFromTopDown(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);
 	void AddFromBottomUp(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);
 	void PrintInventory();
