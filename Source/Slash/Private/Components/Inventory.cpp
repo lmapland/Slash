@@ -8,6 +8,7 @@ UInventory::UInventory()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+// Should be used for PC inventories only
 bool UInventory::AddStrict(int32 ItemID, int32 Amount)
 {
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
@@ -31,7 +32,7 @@ bool UInventory::AddStrict(int32 ItemID, int32 Amount)
 	else { AddFromBottomUp(ItemID, LeftToAdd, MaxStack); }
 
 	UE_LOG(LogTemp, Warning, TEXT("AddStrict(): Done adding."));
-	PrintInventory();
+	//PrintInventory();
 	return true;
 }
 
@@ -40,36 +41,51 @@ TSubclassOf<AItem> UInventory::AddLenient(int32 ItemID, int32& Amount)
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
 
 	// Add items
-	int32 LeftToAdd = Amount;
 	int32 MaxStack = Row->max_stack;
 
 	// First add to any stacks that already exist
 	AddToStack(ItemID, Amount);
 	if (Amount <= 0) return nullptr;
 
-	// either no stacks exist or the amount is bigger than the current stack can hold
-	if (Row->usable) { AddFromTopDown(ItemID, Amount, MaxStack); }
-	else { AddFromBottomUp(ItemID, Amount, MaxStack); }
+	if (OwnedByUser)
+	{
+		// either no stacks exist or the amount is bigger than the current stack can hold
+		if (Row->usable) { AddFromTopDown(ItemID, Amount, MaxStack); }
+		else { AddFromBottomUp(ItemID, Amount, MaxStack); }
+	}
+	else
+	{
+		AddFromTopDown(ItemID, Amount, MaxStack);
+	}
 
-	UE_LOG(LogTemp, Warning, TEXT("AddLenient(): Done adding, %i left."), Amount);
+	//UE_LOG(LogTemp, Warning, TEXT("AddLenient(): Done adding, %i left."), Amount);
 	//PrintInventory();
 	return Row->class_ref;
 }
 
 FInventorySlot UInventory::GetSlot(int32 index)
 {
-	if (index < 0 || index >= Slots.Num()) return *(new FInventorySlot);
+	if (!IsSetUp || index < 0 || index >= Slots.Num()) return *(new FInventorySlot);
 	
 	return *Slots[index];
 }
 
+FInventorySlot* UInventory::GetSlotRef(int32 index)
+{
+	if (!IsSetUp || index < 0 || index >= Slots.Num()) return nullptr;
+
+	return Slots[index];
+}
+
 int32 UInventory::Num()
 {
-	return MaxSlots;
+	return IsSetUp? MaxSlots : 0;
 }
 
 void UInventory::Swap(int32 Slot1, int32 Slot2)
 {
+	if (!IsSetUp) return;
+
 	FInventorySlot* TempSlot;
 	TempSlot = Slots[Slot1];
 	Slots[Slot1] = Slots[Slot2];
@@ -78,6 +94,8 @@ void UInventory::Swap(int32 Slot1, int32 Slot2)
 
 int UInventory::Stack(int32 Slot1, int32 Slot2)
 {
+	if (!IsSetUp) return 0;
+
 	if (Slot1 == Slot2) return 0; // base case; this prevents duplication
 
 	FInventorySlot* Source = Slots[Slot1];
@@ -98,6 +116,13 @@ int UInventory::Stack(int32 Slot1, int32 Slot2)
 	return Source->CurrentStack;
 }
 
+void UInventory::UpdateSlot(FInventorySlot* UpdatedSlot, int32 SlotNum)
+{
+	if (SlotNum >= Num() || SlotNum < 0) return;
+	
+	Slots[SlotNum] = UpdatedSlot;
+}
+
 bool UInventory::IsAttribute(int32 ItemID)
 {
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
@@ -107,7 +132,10 @@ bool UInventory::IsAttribute(int32 ItemID)
 void UInventory::BeginPlay()
 {
 	Super::BeginPlay();
-	
+}
+
+void UInventory::CreateSlots()
+{
 	for (int i = 0; i < MaxSlots; i++)
 	{
 		Slots.Add(new FInventorySlot);
@@ -116,6 +144,8 @@ void UInventory::BeginPlay()
 
 bool UInventory::HasSpace(int32 ItemID, int32 Amount, int32 MaxStack)
 {
+	if (!IsSetUp) return false;
+
 	// loop through array and find if there are any Slots that have this item id
 	int32 LeftToFind = Amount;
 	for (int i = 0; i < MaxSlots; i++)
@@ -148,9 +178,14 @@ void UInventory::AddToStack(const int32& ItemID, int32& LeftToAdd)
 	}
 }
 
-void UInventory::SetDataTable(UDataTable* DT)
+void UInventory::Setup(UDataTable* DT, int32 NumSlots, bool IsUser)
 {
 	TableOfItems = DT;
+	MaxSlots = NumSlots;
+	OwnedByUser = IsUser;
+	CreateSlots();
+
+	IsSetUp = true;
 }
 
 void UInventory::AddFromTopDown(int32& ItemID, int32& LeftToAdd, const int32& MaxStack)

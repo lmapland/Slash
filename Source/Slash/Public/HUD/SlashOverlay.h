@@ -7,6 +7,7 @@
 #include "SlashOverlay.generated.h"
 
 class AItem;
+class UInventory;
 
 /**
  * 
@@ -22,11 +23,11 @@ public:
 	void SetGold(int32 Gold);
 	void SetSouls(int32 Souls);
 	void SetLevelInfo(int32 Level, float LevelPercent);
-	void OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
+	void OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel, UInventory* OtherInventory = nullptr);
 	void UpdateAttribute(int32 ItemID, float Value);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
-	void ShowTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
+	void ShowTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel, UInventory* OtherInventory = nullptr);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
 	void UpdateTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);

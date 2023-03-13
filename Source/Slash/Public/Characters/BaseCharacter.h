@@ -73,7 +73,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UDataTable* InventoryDataTable;
-		
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UInventory* Inventory;
 

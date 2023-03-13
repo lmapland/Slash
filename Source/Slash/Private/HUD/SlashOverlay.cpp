@@ -50,9 +50,9 @@ void USlashOverlay::SetLevelInfo(int32 Level, float LevelPercent)
 	}
 }
 
-void USlashOverlay::OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel)
+void USlashOverlay::OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel, UInventory* OtherInventory)
 {
-	ShowTabWidget(Souls, SoulsNeeded, NextLevel);
+	ShowTabWidget(Souls, SoulsNeeded, NextLevel, OtherInventory);
 }
 
 void USlashOverlay::UpdateAttribute(int32 ItemID, float Value)

@@ -80,6 +80,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FInventorySlot GetSlot(int32 index);
+
+	FInventorySlot* GetSlotRef(int32 index);
 	
 	UFUNCTION(BlueprintCallable)
 	int32 Num();
@@ -90,13 +92,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int Stack(int32 Slot1, int32 Slot2);
 
+	void UpdateSlot(FInventorySlot* UpdatedSlot, int32 SlotNum);
+
 	bool IsAttribute(int32 ItemID);
-	void SetDataTable(UDataTable* DT);
+
+	UFUNCTION(BlueprintCallable)
+	void Setup(UDataTable* DT, int32 NumSlots = 10, bool IsUser = false);
 
 protected:
 	virtual void BeginPlay() override;
 
+
 private:
+	void CreateSlots();
 	bool HasSpace(int32 ItemID, int32 Amount, int32 MaxStack);
 	void AddToStack(const int32& ItemID, int32& LeftToAdd);
 	void AddFromTopDown(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);
@@ -107,8 +115,12 @@ private:
 
 	TArray<FInventorySlot*> Slots;
 
-	int32 MaxSlots = 40;
+	int32 MaxSlots = 10;
 
 	const FString Context = "InventoryItems";
+
+	bool OwnedByUser = false;
+
+	bool IsSetUp = false;
 
 };

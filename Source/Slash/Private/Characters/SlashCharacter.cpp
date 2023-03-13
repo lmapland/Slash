@@ -273,7 +273,7 @@ void ASlashCharacter::BeginPlay()
 		}
 	}
 
-	Inventory->SetDataTable(InventoryDataTable);
+	Inventory->Setup(InventoryDataTable, 40, true);
 
 	GetWorldTimerManager().SetTimer(InitilizationTimer, this, &ASlashCharacter::InitializeSlashOverlay, 2.f);
 }
@@ -344,6 +344,7 @@ void ASlashCharacter::Interact()
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 		// ObjectTypeQuery3 is 'Pawn' - if I expand this system to line trace to look for items as well (AActors) this will need to change
 		ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery3);
+		ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery2);
 		TArray<AActor*> ActorsToIgnore;
 		ActorsToIgnore.Add(this);
 		FHitResult HitResult;
