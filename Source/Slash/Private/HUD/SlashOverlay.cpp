@@ -73,3 +73,24 @@ void USlashOverlay::UpdateAttribute(int32 ItemID, float Value)
 		break;
 	}
 }
+
+/*
+* If the text was updated and then it is updated again before the original text is cleared,
+*  the original timer should be cleared so that a new timer can be created.
+*/
+void USlashOverlay::UpdateItemPickupText(int32 ItemID, int32 Amount)
+{
+	SetItemPickupText(ItemID, Amount);
+
+	if (GetWorld()->GetTimerManager().IsTimerActive(ClearItemPickupTimer))
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ClearItemPickupTimer);
+	}
+
+	GetWorld()->GetTimerManager().SetTimer(ClearItemPickupTimer, this, &USlashOverlay::ClearItemPickupText, TimeUntilItemTextCleared);
+}
+
+void USlashOverlay::ClearItemPickupText()
+{
+	HideItemPickupText();
+}

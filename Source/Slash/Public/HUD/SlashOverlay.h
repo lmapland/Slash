@@ -35,6 +35,39 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
 	void ShowMerchantMenu(const TArray<TSubclassOf<AItem>>& ItemsToSell, const TArray<TSubclassOf<AItem>>& ItemsToBuy);
 	
+	/*
+	* WBPs implement SetItemPickupText() and HideItemPickupText()
+	* When UpdateItemPickupText() is called (from anywhere that calls Inventory->AddItem(), basically),
+	*  it sets a timer for how long until it's time to clear the Item Text
+	*/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
+	void SetItemPickupText(int32 ItemID, int32 Amount);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
+	void HideItemPickupText();
+	
+	void UpdateItemPickupText(int32 ItemID, int32 Amount);
+	void ClearItemPickupText();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
+	bool CtrlPressed();
+	
+	/* A series of functions to help the user Inventory and the container Inventory talk to each other */
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
+	bool ContainerIsOpen();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
+	UInventory* GetContainerInventory();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
+	void RefreshContainer();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
+	UInventory* GetUserInventory();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
+	void RefreshUserInventory();
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HealthProgressBar;
@@ -53,4 +86,8 @@ private:
 	
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* LevelProgressBar;
+
+	FTimerHandle ClearItemPickupTimer;
+
+	float TimeUntilItemTextCleared = 3.f;
 };

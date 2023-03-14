@@ -232,10 +232,9 @@ void ASlashCharacter::SetOverlappingResource(ALandscapeResource* Resource)
 
 void ASlashCharacter::AddItem(int ItemID, int Amount)
 {
-
-	if (Inventory)
+	if (Inventory && Attributes && SlashOverlay)
 	{
-		if (Inventory->IsAttribute(ItemID) && Attributes && SlashOverlay)
+		if (Inventory->IsAttribute(ItemID))
 		{
 			Attributes->AddAttribute(ItemID, Amount);
 			SlashOverlay->UpdateAttribute(ItemID, Amount);
@@ -243,17 +242,56 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 		else
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("ASlashCharacter::AddItem(): (AddLenient) - (ItemID,Amount): (%i,%i) "), ItemID, Amount);
+			int32 OriginalAmount = Amount;
 			TSubclassOf<AItem> ItemRef = Inventory->AddLenient(ItemID, Amount);
 			if (Amount > 0)
 			{
+
 				FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f); // move it away from character & raise it up a bit
 				AItem* Spawned = GetWorld()->SpawnActor<AItem>(ItemRef, LocationToSpawn, GetActorRotation());
 				Spawned->SetAmount(Amount);
 				Spawned->GetMesh()->SetSimulatePhysics(true);
 				Spawned->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
+
+				// Update the UI with info about which items were gathered and which were tossed away
+				if (OriginalAmount == Amount) // added no items
+				{
+					SlashOverlay->UpdateItemPickupText(ItemID, 0); // 0 in Amount to indicate that there is no room in the inventory
+				}
+				else
+				{
+					SlashOverlay->UpdateItemPickupText(ItemID, OriginalAmount - Amount);
+				}
+			}
+			else
+			{
+				SlashOverlay->UpdateItemPickupText(ItemID, OriginalAmount);
 			}
 		}
 	}
+}
+
+void ASlashCharacter::DropItem(int32 SlotID, bool RemoveFromInventory)
+{
+	FInventorySlot* Slot = Inventory->GetSlotRef(SlotID);
+	FItemStructure* ItemStruct = Inventory->GetItemStructure(Slot->ItemID);
+	
+	if (ItemStruct)
+	{
+		FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f); // move it away from character & raise it up a bit
+		AItem* Spawned = GetWorld()->SpawnActor<AItem>(ItemStruct->class_ref, LocationToSpawn, GetActorRotation());
+		Spawned->SetAmount(Slot->CurrentStack);
+		Spawned->GetMesh()->SetSimulatePhysics(true);
+		Spawned->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
+	}
+
+	SlashOverlay->UpdateItemPickupText(Slot->ItemID, Slot->CurrentStack * -1);
+
+	if (RemoveFromInventory)
+	{
+		Inventory->Empty(SlotID);
+	}
+
 }
 
 // protected
@@ -517,7 +555,6 @@ void ASlashCharacter::EndSprint()
  */
 void ASlashCharacter::OpenEverythingMenu()
 {
-	UE_LOG(LogTemp, Warning, TEXT("In OpenEverythingMenu()"));
 	if (SlashOverlay && Attributes)
 	{
 		SlashOverlay->OpenEverythingMenu(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);

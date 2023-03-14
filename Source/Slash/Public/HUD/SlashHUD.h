@@ -29,8 +29,6 @@ private:
 	USlashOverlay* SlashOverlay;
 
 public:
-	FORCEINLINE USlashOverlay* GetSlashOverlay() const { \
-		UE_LOG(LogTemp, Warning, TEXT("GetSlashOverlay() called")); \
-		return SlashOverlay; \
-	}
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
 };

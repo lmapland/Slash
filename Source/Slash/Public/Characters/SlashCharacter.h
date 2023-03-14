@@ -38,6 +38,9 @@ public:
 	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;
 	virtual void AddItem(int ItemID, int Amount) override;
 
+	UFUNCTION(BlueprintCallable)
+	void DropItem(int32 SlotID, bool RemoveFromInventory = false);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -260,7 +263,6 @@ private:
 	UPROPERTY(VisibleInstanceOnly)
 	ALandscapeResource* OverlappingResource;
 
-	FTimerHandle DestroyPickupTimer;
 	FTimerHandle InitilizationTimer;
 
 	bool bIsArmed; // Character currently has a weapon and it is in their hand
@@ -277,4 +279,5 @@ private:
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
 };

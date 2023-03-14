@@ -38,6 +38,7 @@ bool UInventory::AddStrict(int32 ItemID, int32 Amount)
 
 TSubclassOf<AItem> UInventory::AddLenient(int32 ItemID, int32& Amount)
 {
+	UE_LOG(LogTemp, Warning, TEXT("AddLenient(): ItemID: %i, Amount: %i"), ItemID, Amount);
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
 
 	// Add items
@@ -77,6 +78,27 @@ FInventorySlot* UInventory::GetSlotRef(int32 index)
 	return Slots[index];
 }
 
+FItemStructure* UInventory::GetItemStructure(int32 ItemID)
+{
+	return TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
+}
+
+void UInventory::Empty(int32 SlotID)
+{
+	Slots[SlotID]->ItemID = -1;
+	Slots[SlotID]->CurrentStack = 0;
+	Slots[SlotID]->MaxStack = 0;
+}
+
+void UInventory::RemoveFrom(int32 SlotID, int32 Amount)
+{
+	if (Slots[SlotID]->CurrentStack > Amount)
+	{
+		Slots[SlotID]->CurrentStack -= Amount;
+	}
+	else UE_LOG(LogTemp, Warning, TEXT("In UInventory::RemoveFrom(): tried to remove too much: Amount: %i, CurrentStack: %i, SlotID: %i"), Amount, Slots[SlotID]->CurrentStack, SlotID)
+}
+
 int32 UInventory::Num()
 {
 	return IsSetUp? MaxSlots : 0;
@@ -106,11 +128,9 @@ int UInventory::Stack(int32 Slot1, int32 Slot2)
 	Dest->CurrentStack += ToAdd;
 	Source->CurrentStack -= ToAdd;
 
-	// should probably have a function on FInventorySlot called Empty() which does the necessary setup TODO
-	if (Source->CurrentStack == 0) // Empty this slot
+	if (Source->CurrentStack == 0)
 	{
-		Source->MaxStack = 0;
-		Source->ItemID = -1;
+		Empty(Slot1);
 	}
 
 	return Source->CurrentStack;

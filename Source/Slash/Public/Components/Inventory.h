@@ -76,13 +76,21 @@ public:
 	bool AddStrict(int32 ItemID, int32 Amount);
 
 	UFUNCTION(BlueprintCallable)
-	TSubclassOf<AItem> AddLenient(int32 ItemID, int32& Amount);
+	TSubclassOf<AItem> AddLenient(int32 ItemID, UPARAM(ref) int32& Amount);
 
 	UFUNCTION(BlueprintCallable)
 	FInventorySlot GetSlot(int32 index);
 
 	FInventorySlot* GetSlotRef(int32 index);
-	
+
+	FItemStructure* GetItemStructure(int32 ItemID);
+
+	UFUNCTION(BlueprintCallable)
+	void Empty(int32 SlotID);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveFrom(int32 SlotID, int32 Amount);
+
 	UFUNCTION(BlueprintCallable)
 	int32 Num();
 
@@ -99,6 +107,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Setup(UDataTable* DT, int32 NumSlots = 10, bool IsUser = false);
 
+	UFUNCTION(BlueprintCallable)
+	void PrintInventory();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -109,7 +120,6 @@ private:
 	void AddToStack(const int32& ItemID, int32& LeftToAdd);
 	void AddFromTopDown(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);
 	void AddFromBottomUp(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);
-	void PrintInventory();
 
 	UDataTable* TableOfItems;
 
@@ -122,5 +132,8 @@ private:
 	bool OwnedByUser = false;
 
 	bool IsSetUp = false;
+
+public:
+	FORCEINLINE bool IsOwnedByPlayer() { return OwnedByUser; }
 
 };
