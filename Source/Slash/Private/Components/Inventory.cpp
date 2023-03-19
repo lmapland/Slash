@@ -12,13 +12,13 @@ UInventory::UInventory()
 bool UInventory::AddStrict(int32 ItemID, int32 Amount)
 {
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
-	
+
 	if (!HasSpace(ItemID, Amount, Row->max_stack))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AddStrict(): There isn't enough space for %i of itemID %i "), Amount, ItemID);
 		return false;
 	}
-	
+
 	// Add items
 	int32 LeftToAdd = Amount;
 	int32 MaxStack = Row->max_stack;
@@ -32,7 +32,6 @@ bool UInventory::AddStrict(int32 ItemID, int32 Amount)
 	else { AddFromBottomUp(ItemID, LeftToAdd, MaxStack); }
 
 	UE_LOG(LogTemp, Warning, TEXT("AddStrict(): Done adding."));
-	//PrintInventory();
 	return true;
 }
 
@@ -60,8 +59,21 @@ TSubclassOf<AItem> UInventory::AddLenient(int32 ItemID, int32& Amount)
 	}
 
 	//UE_LOG(LogTemp, Warning, TEXT("AddLenient(): Done adding, %i left."), Amount);
-	//PrintInventory();
 	return Row->class_ref;
+}
+
+bool UInventory::AddToSlot(int32 SlotIndex, int32 ItemID, int32 Amount)
+{
+	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
+
+	if (Slots[SlotIndex]->ItemID != -1) return false;
+	if (Amount > Row->max_stack) return false;
+	
+	Slots[SlotIndex]->ItemID = ItemID;
+	Slots[SlotIndex]->CurrentStack = Amount;
+	Slots[SlotIndex]->MaxStack = Row->max_stack;
+
+	return true;
 }
 
 FInventorySlot UInventory::GetSlot(int32 index)
@@ -94,7 +106,13 @@ void UInventory::RemoveFrom(int32 SlotID, int32 Amount)
 {
 	if (Slots[SlotID]->CurrentStack > Amount)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("RemoveFrom(): CurrentStack > Amount"));
 		Slots[SlotID]->CurrentStack -= Amount;
+	}
+	else if (Slots[SlotID]->CurrentStack == Amount)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("RemoveFrom(): CurrentStack == Amount"));
+		Empty(SlotID);
 	}
 	else UE_LOG(LogTemp, Warning, TEXT("In UInventory::RemoveFrom(): tried to remove too much: Amount: %i, CurrentStack: %i, SlotID: %i"), Amount, Slots[SlotID]->CurrentStack, SlotID)
 }

@@ -37,6 +37,7 @@ public:
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;
 	virtual void AddItem(int ItemID, int Amount) override;
+	void UseItem(int32 ItemID, int32 InventorySlot, int32 Amount = 1);
 
 	UFUNCTION(BlueprintCallable)
 	void DropItem(int32 SlotID, bool RemoveFromInventory = false);
@@ -86,6 +87,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd, int Quantity = 1);
 	
+	UFUNCTION(BlueprintCallable)
+	void FinishUseItem();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float InteractDistance = 200.f;
@@ -159,6 +162,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float WalkSpeedBlock = 200.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float WalkSpeedUseItem = 200.f;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
@@ -171,6 +177,9 @@ private:
 	/* Pickup items */
 	void RemovePickedUpItem();
 	void UpdateActionState(EActionState State);
+	AWeapon* SpawnWeapon(TSubclassOf<AItem> ItemRef);
+	AItem* SpawnItem(TSubclassOf<AItem> ItemRef);
+	void TossItem(AItem* ItemToToss);
 
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
 
@@ -275,6 +284,12 @@ private:
 
 	UPROPERTY()
 	USlashOverlay* SlashOverlay;
+
+	int32 ItemInUse;
+	int32 ItemInUseAmount;
+	TArray<FString> UseTypes;
+	int32 SlotIndex;
+
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }

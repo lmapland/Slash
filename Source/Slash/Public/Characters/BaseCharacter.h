@@ -97,7 +97,10 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = Montages)
 	UAnimMontage* EquipMontage;
-
+	
+	UPROPERTY(EditDefaultsOnly, Category = Montages)
+	UAnimMontage* ItemUseMontage;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	AActor* CombatTarget;
 

@@ -7,6 +7,7 @@
 #include "InventorySlotWidget.generated.h"
 
 class USlashOverlay;
+class ASlashCharacter;
 
 class UInventory;
 /**
@@ -24,10 +25,24 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void CtrlClicked(int32 SlotIndex, UInventory* Inventory);
+	
+	UFUNCTION(BlueprintCallable)
+	void RightClicked(int32 SlotIndex, UInventory* Inventory);
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void SetSlotEmpty();
 	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void Refresh();
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsUsable = false;
+
 private:
+	void SetCharacter();
+	void SetOverlay();
+
 	USlashOverlay* Overlay;
+	ASlashCharacter* Character;
 };

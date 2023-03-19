@@ -88,7 +88,6 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOw
 	AttachMeshToSocket(InParent, InSocketName);
 	DisableSphereCollision();
 
-	PlayEquipSound();
 	DeactivateEmbers();
 }
 

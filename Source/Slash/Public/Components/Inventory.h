@@ -9,6 +9,7 @@
 
 class AItem;
 class UTexture2D;
+class UNiagaraSystem;
 
 USTRUCT(Blueprintable)
 struct FItemStructure : public FTableRowBase
@@ -47,6 +48,25 @@ struct FItemStructure : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool usable;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundBase* UseSound;
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UNiagaraSystem* UseParticles;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName UseAnimSectionName;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 UseType = 0; // 0 = Direct, 1 = Weapon
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int UseItemID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int UseAmount;
+
 };
 
 USTRUCT(Blueprintable)
@@ -77,6 +97,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	TSubclassOf<AItem> AddLenient(int32 ItemID, UPARAM(ref) int32& Amount);
+
+	UFUNCTION(BlueprintCallable)
+	bool AddToSlot(int32 SlotIndex, int32 ItemID, int32 Amount);
 
 	UFUNCTION(BlueprintCallable)
 	FInventorySlot GetSlot(int32 index);

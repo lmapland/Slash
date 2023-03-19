@@ -42,15 +42,10 @@ void UInventorySlotWidget::MoveAcrossInventories(int32 SourceSlotIndex, int32 De
 void UInventorySlotWidget::CtrlClicked(int32 SlotIndex, UInventory* Inventory)
 {
 	// Setup
-	ACharacter* PC = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	ASlashCharacter* Character = Cast<ASlashCharacter>(PC);
+	if (!Character) SetCharacter();
 	if (!Character) return;
-	if (!Overlay)
-	{
-		Overlay = Character->GetSlashOverlay();
-	}
+	if (!Overlay) SetOverlay();
 	FInventorySlot* InventorySlot = Inventory->GetSlotRef(SlotIndex);
-	
 	if (!Overlay->CtrlPressed()) return;
 
 	if (Overlay->ContainerIsOpen())
@@ -91,4 +86,43 @@ void UInventorySlotWidget::CtrlClicked(int32 SlotIndex, UInventory* Inventory)
 		Character->DropItem(SlotIndex, true);
 		SetSlotEmpty();
 	}
+}
+
+void UInventorySlotWidget::RightClicked(int32 SlotIndex, UInventory* Inventory)
+{
+	if (!IsUsable) {
+		UE_LOG(LogTemp, Warning, TEXT("RightClicked(): Item is not usable"));  return;
+	}
+	if (!Character) SetCharacter();
+	if (!Character) {
+		UE_LOG(LogTemp, Warning, TEXT("RightClicked(): Character could not be determined")); return;
+	}
+
+	FInventorySlot* SlotToUse = Inventory->GetSlotRef(SlotIndex);
+	int32 ItemID = SlotToUse->ItemID;
+	
+	if (SlotToUse->CurrentStack == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RightClicked(): CurrentStack is 0"));
+		return;
+	}
+	Inventory->RemoveFrom(SlotIndex, 1);
+
+	if (SlotToUse->CurrentStack == 0) SetSlotEmpty();
+	else Refresh();
+	
+	//UE_LOG(LogTemp, Warning, TEXT("RightClicked(): UI refreshed; about to use"));
+	int32 SlotToSend = Inventory->IsOwnedByPlayer() ? SlotIndex : -1;
+	Character->UseItem(ItemID, SlotToSend, 1);
+}
+
+void UInventorySlotWidget::SetCharacter()
+{
+	ACharacter* PC = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	Character = Cast<ASlashCharacter>(PC);
+}
+
+void UInventorySlotWidget::SetOverlay()
+{
+	Overlay = Character->GetSlashOverlay();
 }

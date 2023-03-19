@@ -22,6 +22,8 @@
 #include "Animation/AnimMontage.h"
 #include "TimerManager.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Interfaces/Interactable.h"
 
 // public
@@ -128,13 +130,13 @@ ASlashCharacter::ASlashCharacter()
 	HelmetArmourComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetArmour"));
 	HelmetArmourComponent->SetupAttachment(GetMesh());
 
-
-
 	MinZoomLength = 100.f;
 	MaxZoomLength = 600.f;
 	ZoomInOutAmount = 30.f;
 
 	bIsArmed = false;
+	UseTypes.Add("Direct");
+	UseTypes.Add("Weapon");
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
@@ -246,12 +248,9 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 			TSubclassOf<AItem> ItemRef = Inventory->AddLenient(ItemID, Amount);
 			if (Amount > 0)
 			{
-
-				FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f); // move it away from character & raise it up a bit
-				AItem* Spawned = GetWorld()->SpawnActor<AItem>(ItemRef, LocationToSpawn, GetActorRotation());
+				AItem* Spawned = SpawnItem(ItemRef);
 				Spawned->SetAmount(Amount);
-				Spawned->GetMesh()->SetSimulatePhysics(true);
-				Spawned->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
+				TossItem(Spawned);
 
 				// Update the UI with info about which items were gathered and which were tossed away
 				if (OriginalAmount == Amount) // added no items
@@ -271,6 +270,36 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 	}
 }
 
+/*
+* The thing to apply takes effect only when the animation is complete
+*/
+void ASlashCharacter::UseItem(int32 ItemID, int32 InventorySlot, int32 Amount)
+{
+	UE_LOG(LogTemp, Warning, TEXT("In UseItem()"));
+	ItemInUse = ItemID;
+	ItemInUseAmount = Amount;
+	SlotIndex = InventorySlot;
+
+	// First need to know what the effects are: Get the DataTable element for this Name
+	FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ItemInUse)), "InventoryItems");
+
+	// Put the character into ItemUse State
+	UpdateActionState(EActionState::EAS_UsingItem);
+	// Play sound effect - from DT
+	if (ItemRow->UseSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ItemRow->UseSound, GetActorLocation());
+	}
+	// Play Particle effect - from DT
+	if (ItemRow->UseParticles)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ItemRow->UseParticles, GetActorLocation());
+	}
+
+	// Play animation (add end of anim function to end their item use and remove them from that state) - Anim Montage & Anim Section Name from DT
+	GetWorldTimerManager().SetTimer(InitilizationTimer, this, &ASlashCharacter::FinishUseItem, 2.f);
+}
+
 void ASlashCharacter::DropItem(int32 SlotID, bool RemoveFromInventory)
 {
 	FInventorySlot* Slot = Inventory->GetSlotRef(SlotID);
@@ -278,11 +307,9 @@ void ASlashCharacter::DropItem(int32 SlotID, bool RemoveFromInventory)
 	
 	if (ItemStruct)
 	{
-		FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f); // move it away from character & raise it up a bit
-		AItem* Spawned = GetWorld()->SpawnActor<AItem>(ItemStruct->class_ref, LocationToSpawn, GetActorRotation());
+		AItem* Spawned = SpawnItem(ItemStruct->class_ref);
 		Spawned->SetAmount(Slot->CurrentStack);
-		Spawned->GetMesh()->SetSimulatePhysics(true);
-		Spawned->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
+		TossItem(Spawned);
 	}
 
 	SlashOverlay->UpdateItemPickupText(Slot->ItemID, Slot->CurrentStack * -1);
@@ -318,7 +345,7 @@ void ASlashCharacter::BeginPlay()
 
 void ASlashCharacter::Move(const FInputActionValue& Value)
 {
-	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Blocking && ActionState != EActionState::EAS_Sprinting) return;
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Blocking && ActionState != EActionState::EAS_Sprinting && ActionState != EActionState::EAS_UsingItem) return;
 
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -347,22 +374,8 @@ void ASlashCharacter::Interact()
 		AItem* Item = Cast<AItem>(OverlappingItem);
 		if (Item)
 		{
-			// TODO delete this: overlapping with a weapon should put it into the inventory just like all other items
-			// keeping it for now, though, until I actually get the inventory working & also using items
-			AWeapon* Weapon = Cast<AWeapon>(OverlappingItem);
-			if (Weapon)
-			{
-				if (EquippedWeapon)
-				{
-					EquippedWeapon->Destroy();
-				}
-				Equip1HWeapon(Weapon);
-			}
-			else
-			{
-				Item->PickUp();
-				AddItem(Item->GetItemID(), Item->GetAmount());
-			}
+			Item->PickUp();
+			AddItem(Item->GetItemID(), Item->GetAmount());
 		}
 	}
 	else if (OverlappingResource)
@@ -385,6 +398,7 @@ void ASlashCharacter::Interact()
 		ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery2);
 		TArray<AActor*> ActorsToIgnore;
 		ActorsToIgnore.Add(this);
+		if (EquippedWeapon) ActorsToIgnore.Add(EquippedWeapon);
 		FHitResult HitResult;
 
 		// how to get the camera location & rotation in world space
@@ -648,6 +662,69 @@ void ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> Amoun
 {
 
 }
+
+void ASlashCharacter::FinishUseItem()
+{
+	FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ItemInUse)), "InventoryItems");
+	
+	switch (ItemRow->UseType)
+	{
+		case 0: // Direct, like potions
+		{
+			AddItem(ItemRow->UseItemID, ItemRow->UseAmount);
+			break;
+		}
+		case 1: // Weapon, for equipping
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): Equipping the weapon"));
+			int32 OldWeaponID = 0;
+			if (EquippedWeapon)
+			{
+				OldWeaponID = EquippedWeapon->GetItemID();
+				//UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): There is an Equipped Weapon; storing the info. OldWeaponID: %i"), OldWeaponID);
+				EquippedWeapon->Destroy();
+			}
+
+			// then spawn the new weapon
+			AWeapon* Spawned = SpawnWeapon(ItemRow->class_ref);
+			EquippedWeapon = Spawned;
+			Equip1HWeapon(Spawned);
+
+			if (OldWeaponID)
+			{
+				if (SlotIndex == -1) // weapon was right-clicked from a container
+				{
+					//UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): Equipping the weapon from a container"));
+					int32 AmountNotAdded = 1;
+					TSubclassOf<AItem> ItemRef = Inventory->AddLenient(OldWeaponID, AmountNotAdded);
+					if (AmountNotAdded != 0) // inventory is full!
+					{
+						UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): No room left in user's inventory"));
+						TossItem(SpawnWeapon(ItemRef));
+					}
+				}
+				else
+				{
+					//UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): Equipping the weapon from user Inventory. SlotIndex: %i, OldWeaponID: %i"), SlotIndex, OldWeaponID);
+					// Add old weapon to inventory
+					Inventory->AddToSlot(SlotIndex, OldWeaponID, 1);
+				}
+				SlashOverlay->RefreshUserInventory();
+			}
+
+			break;
+		}
+		default:
+			break;
+	}
+
+	ItemInUse = 0;
+	ItemInUseAmount = 0;
+	SlotIndex = 0;
+	// Set the ActionState back to normal
+	UpdateActionState(EActionState::EAS_Unoccupied);
+}
+
 // private
 void ASlashCharacter::InitializeSlashOverlay()
 {
@@ -660,7 +737,7 @@ void ASlashCharacter::InitializeSlashOverlay()
 			if (SlashOverlay && Attributes)
 			{
 				SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
-				SlashOverlay->SetStaminaBarPercent(1.f); // Attributes->GetStaminaPercent());
+				SlashOverlay->SetStaminaBarPercent(1.f);
 				SlashOverlay->SetGold(0);
 				SlashOverlay->SetSouls(0);
 				SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
@@ -710,7 +787,36 @@ void ASlashCharacter::UpdateActionState(EActionState State)
 	case EActionState::EAS_Sprinting:
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedSprint;
 		break;
+	case EActionState::EAS_UsingItem:
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedUseItem;
+		break;
 	};
 
 	ActionState = State;
+}
+
+AWeapon* ASlashCharacter::SpawnWeapon(TSubclassOf<AItem> ItemRef)
+{
+	FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f);
+	AWeapon* WepSpawned = GetWorld()->SpawnActor<AWeapon>(ItemRef, LocationToSpawn, GetActorRotation());
+
+	return WepSpawned;
+}
+
+AItem* ASlashCharacter::SpawnItem(TSubclassOf<AItem> ItemRef)
+{
+	FVector LocationToSpawn = GetActorLocation() + (GetActorForwardVector() * 40) + FVector(0.f, 0.f, 25.f);
+	AItem* ItemSpawned = GetWorld()->SpawnActor<AItem>(ItemRef, LocationToSpawn, GetActorRotation());
+
+	return ItemSpawned;
+}
+
+void ASlashCharacter::TossItem(AItem* ItemToToss)
+{
+	ItemToToss->GetMesh()->SetCollisionProfileName(UCollisionProfile::BlockAllDynamic_ProfileName);
+	ItemToToss->GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	ItemToToss->GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+
+	ItemToToss->GetMesh()->SetSimulatePhysics(true);
+	ItemToToss->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
 }
