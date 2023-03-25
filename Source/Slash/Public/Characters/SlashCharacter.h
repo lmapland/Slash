@@ -37,6 +37,7 @@ public:
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;
 	virtual void AddItem(int ItemID, int Amount) override;
+	void RemoveItem(int ItemID, int Amount);
 	void UseItem(int32 ItemID, int32 InventorySlot, int32 Amount = 1);
 
 	UFUNCTION(BlueprintCallable)
@@ -83,9 +84,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void RequestLevelUp();
 
-	// this function will actually take 1 or more parameters
+	// false when purchase cannot be applied; true when it can
 	UFUNCTION(BlueprintCallable)
-	void ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd, int Quantity = 1);
+	bool ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd);
 	
 	UFUNCTION(BlueprintCallable)
 	void FinishUseItem();

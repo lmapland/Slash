@@ -93,13 +93,12 @@ public:
 	UInventory();
 
 	UFUNCTION(BlueprintCallable)
-	bool AddStrict(int32 ItemID, int32 Amount);
-
-	UFUNCTION(BlueprintCallable)
 	TSubclassOf<AItem> AddLenient(int32 ItemID, UPARAM(ref) int32& Amount);
 
 	UFUNCTION(BlueprintCallable)
 	bool AddToSlot(int32 SlotIndex, int32 ItemID, int32 Amount);
+
+	void RemoveItem(int32 ItemID, int32 Amount);
 
 	UFUNCTION(BlueprintCallable)
 	FInventorySlot GetSlot(int32 index);
@@ -108,6 +107,7 @@ public:
 
 	FItemStructure* GetItemStructure(int32 ItemID);
 
+	// The slot is known to be empty: zero out the slot
 	UFUNCTION(BlueprintCallable)
 	void Empty(int32 SlotID);
 
@@ -123,6 +123,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	int Stack(int32 Slot1, int32 Slot2);
 
+	// maybe ReplaceSlot() is more accurate here?
 	void UpdateSlot(FInventorySlot* UpdatedSlot, int32 SlotNum);
 
 	bool IsAttribute(int32 ItemID);
@@ -133,13 +134,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PrintInventory();
 
+	bool Contains(int32 ItemID, int32 Amount);
+
+	bool HasSpace(int32 ItemID, int32 Amount);
+
 protected:
 	virtual void BeginPlay() override;
 
 
 private:
 	void CreateSlots();
-	bool HasSpace(int32 ItemID, int32 Amount, int32 MaxStack);
 	void AddToStack(const int32& ItemID, int32& LeftToAdd);
 	void AddFromTopDown(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);
 	void AddFromBottomUp(int32& ItemID, int32& LeftToAdd, const int32& MaxStack);

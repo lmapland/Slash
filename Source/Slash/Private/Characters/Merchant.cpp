@@ -3,8 +3,9 @@
 
 #include "Characters/Merchant.h"
 #include "HUD/SlashOverlay.h"
+#include "Components/AttributeComponent.h"
 
 void AMerchant::Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes)
 {
-	Overlay->ShowMerchantMenu(ItemsToSell, ItemsToBuy);
+	Overlay->ShowMerchantMenu(ItemsToSell, ItemsToBuy, Attributes->GetGold());
 }

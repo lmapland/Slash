@@ -21,9 +21,9 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Selling")
-	TArray<TSubclassOf<AItem>> ItemsToSell;
+	TArray<int32> ItemsToSell;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Selling")
-	TArray<TSubclassOf<AItem>> ItemsToBuy;
+	TArray<int32> ItemsToBuy;
 
 };

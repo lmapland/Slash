@@ -23,6 +23,28 @@ void UAttributeComponent::DrainStamina(float DeltaTime)
 	Stamina = FMath::Clamp(Stamina - StaminaDrainRate * DeltaTime, 0.f, MaxStamina);
 }
 
+bool UAttributeComponent::Contains(int32 ItemID, int32 Amount)
+{
+	switch (ItemID)
+	{
+	case 0:
+		return Health > Amount? true : false;
+		break;
+	case 1:
+		return Stamina > Amount ? true : false;
+		break;
+	case 2:
+		return Souls > Amount ? true : false;
+		break;
+	case 3:
+		return Gold > Amount ? true : false;
+		break;
+	default:
+		return false;
+		break;
+	}
+}
+
 // Called when the game starts
 void UAttributeComponent::BeginPlay()
 {

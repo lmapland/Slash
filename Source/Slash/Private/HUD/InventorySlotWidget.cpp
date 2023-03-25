@@ -91,7 +91,7 @@ void UInventorySlotWidget::CtrlClicked(int32 SlotIndex, UInventory* Inventory)
 void UInventorySlotWidget::RightClicked(int32 SlotIndex, UInventory* Inventory)
 {
 	if (!IsUsable) {
-		UE_LOG(LogTemp, Warning, TEXT("RightClicked(): Item is not usable"));  return;
+		UE_LOG(LogTemp, Warning, TEXT("RightClicked(): Item is not usable")); return;
 	}
 	if (!Character) SetCharacter();
 	if (!Character) {

@@ -238,8 +238,8 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 	{
 		if (Inventory->IsAttribute(ItemID))
 		{
-			Attributes->AddAttribute(ItemID, Amount);
-			SlashOverlay->UpdateAttribute(ItemID, Amount);
+			float ReturnedAttribute = Attributes->AddAttribute(ItemID, Amount);
+			SlashOverlay->UpdateAttribute(ItemID, ReturnedAttribute);
 		}
 		else
 		{
@@ -266,6 +266,26 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 			{
 				SlashOverlay->UpdateItemPickupText(ItemID, OriginalAmount);
 			}
+		}
+	}
+}
+
+// Expects a positive value in Amount
+void ASlashCharacter::RemoveItem(int ItemID, int Amount)
+{
+	UE_LOG(LogTemp, Warning, TEXT("In ASlashCharacter::RemoveItem():"));
+	if (Inventory && Attributes && SlashOverlay)
+	{
+		if (Inventory->IsAttribute(ItemID))
+		{
+			float ReturnedAttribute = Attributes->AddAttribute(ItemID, Amount * -1);
+			SlashOverlay->UpdateAttribute(ItemID, ReturnedAttribute);
+		}
+		else
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("ASlashCharacter::AddItem(): (AddLenient) - (ItemID,Amount): (%i,%i) "), ItemID, Amount);
+			//TSubclassOf<AItem> ItemRef = Inventory->AddLenient(ItemID, Amount);
+			Inventory->RemoveItem(ItemID, Amount);
 		}
 	}
 }
@@ -658,9 +678,42 @@ void ASlashCharacter::RequestLevelUp()
 	}
 }
 
-void ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd, int Quantity)
+bool ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> AmountsToRemove, TArray<int> ItemsToAdd, TArray<int> AmountsToAdd)
 {
+	// check whether removal request can be completed: return false if not
+	// TODO at the moment I am treating these arrays like single ints, but this can and should be changed in the future
+	FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ItemsToRemove[0])), "InventoryItems");
+	if (ItemRow->is_attribute)
+	{
+		if (!Attributes->Contains(ItemsToRemove[0], AmountsToRemove[0]))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ApplyPurchase(): (is_attribute) Inventory does not contain the necessary items to make the purchase"));
+			return false;
+		}
+	}
+	else if (!Inventory->Contains(ItemsToRemove[0], AmountsToRemove[0]))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ApplyPurchase(): Inventory does not contain the necessary items to make the purchase"));
+		return false;
+	}
+	
+	// check whether add request can be completed: return false if not
+	if (!Inventory->HasSpace(ItemsToAdd[0], AmountsToAdd[0]))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ApplyPurchase(): Inventory cannot hold the requested Items To Add"));
+		return false;
+	}
 
+	AddItem(ItemsToAdd[0], AmountsToAdd[0]);
+	RemoveItem(ItemsToRemove[0], AmountsToRemove[0]);
+
+	if (SlashOverlay)
+	{
+		SlashOverlay->UpdateItemPickupText(ItemsToAdd[0], AmountsToAdd[0]);
+		SlashOverlay->UpdateGold(Attributes->GetGold());
+	}
+
+	return true;
 }
 
 void ASlashCharacter::FinishUseItem()

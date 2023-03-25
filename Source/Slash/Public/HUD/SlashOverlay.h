@@ -33,8 +33,11 @@ public:
 	void UpdateTabWidget(int32 Souls, int32 SoulsNeeded, int32 NextLevel);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
-	void ShowMerchantMenu(const TArray<TSubclassOf<AItem>>& ItemsToSell, const TArray<TSubclassOf<AItem>>& ItemsToBuy);
+	void ShowMerchantMenu(const TArray<int32>& ItemsToSell, const TArray<int32>& ItemsToBuy, int32 UserGold);
 	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Merchant")
+	void UpdateGold(int32 UserGold);
+
 	/*
 	* WBPs implement SetItemPickupText() and HideItemPickupText()
 	* When UpdateItemPickupText() is called (from anywhere that calls Inventory->AddItem(), basically),

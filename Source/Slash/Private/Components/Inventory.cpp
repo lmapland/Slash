@@ -8,33 +8,6 @@ UInventory::UInventory()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-// Should be used for PC inventories only
-bool UInventory::AddStrict(int32 ItemID, int32 Amount)
-{
-	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
-
-	if (!HasSpace(ItemID, Amount, Row->max_stack))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AddStrict(): There isn't enough space for %i of itemID %i "), Amount, ItemID);
-		return false;
-	}
-
-	// Add items
-	int32 LeftToAdd = Amount;
-	int32 MaxStack = Row->max_stack;
-
-	// First add to any stacks that already exist
-	AddToStack(ItemID, LeftToAdd);
-	if (LeftToAdd <= 0) return true;
-
-	// either no stacks exist or the amount is bigger than the current stack can hold
-	if (Row->usable) { AddFromTopDown(ItemID, LeftToAdd, MaxStack); }
-	else { AddFromBottomUp(ItemID, LeftToAdd, MaxStack); }
-
-	UE_LOG(LogTemp, Warning, TEXT("AddStrict(): Done adding."));
-	return true;
-}
-
 TSubclassOf<AItem> UInventory::AddLenient(int32 ItemID, int32& Amount)
 {
 	UE_LOG(LogTemp, Warning, TEXT("AddLenient(): ItemID: %i, Amount: %i"), ItemID, Amount);
@@ -74,6 +47,29 @@ bool UInventory::AddToSlot(int32 SlotIndex, int32 ItemID, int32 Amount)
 	Slots[SlotIndex]->MaxStack = Row->max_stack;
 
 	return true;
+}
+
+void UInventory::RemoveItem(int32 ItemID, int32 Amount)
+{
+	int32 LeftToRemove = Amount;
+	for (int i = 0; i < Slots.Num(); i++)
+	{
+		if (Slots[i]->ItemID == ItemID)
+		{
+			int32 ToRemove = Slots[i]->CurrentStack > LeftToRemove ? LeftToRemove : Slots[i]->CurrentStack;
+			LeftToRemove -= ToRemove;
+			if (ToRemove == Slots[i]->CurrentStack)
+			{
+				Empty(i);
+			}
+			else
+			{
+				Slots[i]->CurrentStack -= ToRemove;
+			}
+
+			if (LeftToRemove == 0) return;
+		}
+	}
 }
 
 FInventorySlot UInventory::GetSlot(int32 index)
@@ -180,9 +176,11 @@ void UInventory::CreateSlots()
 	}
 }
 
-bool UInventory::HasSpace(int32 ItemID, int32 Amount, int32 MaxStack)
+bool UInventory::HasSpace(int32 ItemID, int32 Amount)
 {
 	if (!IsSetUp) return false;
+
+	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
 
 	// loop through array and find if there are any Slots that have this item id
 	int32 LeftToFind = Amount;
@@ -194,7 +192,7 @@ bool UInventory::HasSpace(int32 ItemID, int32 Amount, int32 MaxStack)
 		}
 		else if (Slots[i]->ItemID == -1)
 		{
-			LeftToFind -= MaxStack;
+			LeftToFind -= Row->max_stack;
 		}
 		if (LeftToFind <= 0) return true;
 	}
@@ -281,4 +279,21 @@ void UInventory::PrintInventory()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Slots[%i]: <%i, %i, %i>"), i, Slots[i]->ItemID, Slots[i]->CurrentStack, Slots[i]->MaxStack);
 	}
+}
+
+bool UInventory::Contains(int32 ItemID, int32 Amount)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): ItemID: %i, Amount: %i"), ItemID, Amount);
+	int32 HasAmount = 0;
+	for (auto Slot : Slots)
+	{
+		if (Slot->ItemID == ItemID)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): Found a slot with the same itemid"));
+			HasAmount += Slot->CurrentStack;
+			if (HasAmount >= Amount) return true;
+		}
+	}
+
+	return false;
 }

@@ -16,6 +16,7 @@ public:
 	UAttributeComponent();
 	void RegenStamina(float DeltaTime);
 	void DrainStamina(float DeltaTime);
+	bool Contains(int32 ItemID, int32 Amount);
 
 protected:
 	virtual void BeginPlay() override;
