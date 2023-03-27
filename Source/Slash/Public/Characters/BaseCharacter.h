@@ -70,7 +70,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAttributeComponent* Attributes;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UDataTable* InventoryDataTable;
 

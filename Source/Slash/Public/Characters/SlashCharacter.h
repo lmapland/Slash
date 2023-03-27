@@ -12,6 +12,8 @@
 class USlashOverlay;
 class UInputComponent;
 class AController;
+class UEventsSubsystem;
+class UQuestComponent;
 class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
@@ -90,6 +92,9 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void FinishUseItem();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UQuestComponent* Quests;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	float InteractDistance = 200.f;
@@ -285,6 +290,8 @@ private:
 
 	UPROPERTY()
 	USlashOverlay* SlashOverlay;
+
+	UEventsSubsystem* EventsSubsystem;
 
 	int32 ItemInUse;
 	int32 ItemInUseAmount;

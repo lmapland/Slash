@@ -23,22 +23,22 @@ protected:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	float Health;
+	float Health = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	float MaxHealth;
+	float MaxHealth = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	float Stamina;
+	float Stamina = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	float MaxStamina;
+	float MaxStamina = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	int32 Gold;
+	int32 Gold = 0;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
-	int32 Souls;
+	int32 Souls = 0;
 	
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float StaminaRegenRate = 8.f;
@@ -51,6 +51,9 @@ private:
 
 	TArray<int32> SoulsPerLevel = { 0, 3, 5, 8, 12, 17, 23, 30, 38, 47 };
 
+	class UEventsSubsystem* EventsSubsystem;
+
+
 public:
 	void ReceiveDamage(float Damage);
 	bool UseStaminaIfAble(int32 Value);
@@ -59,7 +62,7 @@ public:
 	bool IsAlive();
 	void AddSouls(int32 Value);
 	void AddGold(int32 Value);
-	void LevelUp();
+	bool LevelUp();
 	float AddAttribute(int32 ItemID, int32 Amount);
 
 	FORCEINLINE float GetHealth() const { return Health; }

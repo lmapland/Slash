@@ -21,7 +21,7 @@ struct FItemStructure : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<AItem> class_ref;
-		
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName display_name;
 	

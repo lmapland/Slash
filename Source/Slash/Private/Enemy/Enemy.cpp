@@ -5,14 +5,14 @@
 #include "AIController.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Subsystems/EventsSubsystem.h"
+#include "Components/QuestObjectiveTypes.h"
 #include "Components/AttributeComponent.h"
 #include "Components/BoxComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "HUD/HealthBarComponent.h"
 #include "Items/Weapon.h"
 #include "Items/Soul.h"
-
-
 
 // public
 AEnemy::AEnemy()
@@ -106,6 +106,7 @@ void AEnemy::BeginPlay()
 	HideHealthBar();
 	MoveToTarget(PatrolTarget);
 	SpawnDefaultWeapons();
+	EventsSubsystem = GetGameInstance()->GetSubsystem<UEventsSubsystem>();
 }
 
 void AEnemy::Die_Implementation()
@@ -121,6 +122,7 @@ void AEnemy::Die_Implementation()
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetExtraWeaponCollisionDisabled();
 	SpawnSoul();
+	if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_EnemyKilled, EnemyID, 1);
 }
 
 void AEnemy::Attack()

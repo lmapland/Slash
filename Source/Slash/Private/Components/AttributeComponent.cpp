@@ -2,6 +2,8 @@
 
 
 #include "Components/AttributeComponent.h"
+#include "Subsystems/EventsSubsystem.h"
+#include "Components/QuestObjectiveTypes.h"
 
 // Sets default values for this component's properties
 UAttributeComponent::UAttributeComponent()
@@ -45,13 +47,12 @@ bool UAttributeComponent::Contains(int32 ItemID, int32 Amount)
 	}
 }
 
-// Called when the game starts
 void UAttributeComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
-	
+	EventsSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UEventsSubsystem>();
+
 }
 
 void UAttributeComponent::ReceiveDamage(float Damage)
@@ -95,17 +96,19 @@ void UAttributeComponent::AddGold(int32 Value)
 	Gold += Value;
 }
 
-void UAttributeComponent::LevelUp()
+bool UAttributeComponent::LevelUp()
 {
 	// User has clicked the button. First we verify that the user has enough Souls to level, then do it
 	if (Souls < SoulsPerLevel[Level])
 	{
 		UE_LOG(LogTemp, Warning, TEXT("In LevelUp(): Could not level up; user has %i out of %i Souls"), Souls, SoulsPerLevel[Level]);
-		return;
+		return false;
 	}
 
 	Souls -= SoulsPerLevel[Level];
 	Level += 1;
+
+	return true;
 }
 
 float UAttributeComponent::AddAttribute(int32 ItemID, int32 Amount)
@@ -114,18 +117,22 @@ float UAttributeComponent::AddAttribute(int32 ItemID, int32 Amount)
 	{
 	case 0:
 		AddHealth(Amount);
+		if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_AttributeUpdated, ItemID, Health);
 		return Health / MaxHealth;
 		break;
 	case 1:
 		AddStamina(Amount);
+		if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_AttributeUpdated, ItemID, Stamina);
 		return Stamina / MaxStamina;
 		break;
 	case 2:
 		AddSouls(Amount);
+		if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_AttributeUpdated, ItemID, Souls);
 		return (float)Souls;
 		break;
 	case 3:
 		AddGold(Amount);
+		if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_AttributeUpdated, ItemID, Gold);
 		return (float)Gold;
 		break;
 	default:

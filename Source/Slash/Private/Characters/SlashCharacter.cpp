@@ -10,6 +10,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Subsystems/EventsSubsystem.h"
+#include "Components/QuestComponent.h"
+#include "Components/QuestObjectiveTypes.h"
 #include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/AttributeComponent.h"
@@ -51,6 +54,8 @@ ASlashCharacter::ASlashCharacter()
 
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
+
+	Quests = CreateDefaultSubobject<UQuestComponent>(TEXT("Quests"));
 
 	/* Character Mesh Components */
 	Hair = CreateDefaultSubobject<UGroomComponent>(TEXT("Hair"));
@@ -260,11 +265,13 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 				else
 				{
 					SlashOverlay->UpdateItemPickupText(ItemID, OriginalAmount - Amount);
+					if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_ItemAdded, ItemID, OriginalAmount - Amount);
 				}
 			}
 			else
 			{
 				SlashOverlay->UpdateItemPickupText(ItemID, OriginalAmount);
+				if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_ItemAdded, ItemID, OriginalAmount);
 			}
 		}
 	}
@@ -357,6 +364,8 @@ void ASlashCharacter::BeginPlay()
 			Subsystem->AddMappingContext(CharMappingContext, 0);
 		}
 	}
+
+	EventsSubsystem = GetGameInstance()->GetSubsystem<UEventsSubsystem>();
 
 	Inventory->Setup(InventoryDataTable, 40, true);
 
@@ -671,10 +680,13 @@ void ASlashCharacter::RequestLevelUp()
 {
 	if (Attributes && SlashOverlay)
 	{
-		Attributes->LevelUp();
-		SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
-		SlashOverlay->UpdateTabWidget(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);
-		UE_LOG(LogTemp, Warning, TEXT("Called UpdateTabWidget"));
+		if (Attributes->LevelUp())
+		{
+			SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
+			SlashOverlay->UpdateTabWidget(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);
+			UE_LOG(LogTemp, Warning, TEXT("Called UpdateTabWidget"));
+			if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_LeveledUp, Attributes->GetLevel(), -1);
+		}
 	}
 }
 
@@ -725,6 +737,7 @@ void ASlashCharacter::FinishUseItem()
 		case 0: // Direct, like potions
 		{
 			AddItem(ItemRow->UseItemID, ItemRow->UseAmount);
+			if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_ItemUsed, ItemInUse, ItemInUseAmount);
 			break;
 		}
 		case 1: // Weapon, for equipping
@@ -742,6 +755,7 @@ void ASlashCharacter::FinishUseItem()
 			AWeapon* Spawned = SpawnWeapon(ItemRow->class_ref);
 			EquippedWeapon = Spawned;
 			Equip1HWeapon(Spawned);
+			if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_ItemEquipped, Spawned->GetItemID(), Spawned->GetAmount());
 
 			if (OldWeaponID)
 			{

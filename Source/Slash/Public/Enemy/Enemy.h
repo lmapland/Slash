@@ -6,7 +6,22 @@
 #include "Characters/BaseCharacter.h"
 #include "Interfaces/HitInterface.h"
 #include "Characters/CharacterTypes.h"
+#include "Engine/DataTable.h"
 #include "Enemy.generated.h"
+
+USTRUCT(Blueprintable)
+struct FEnemyStruct : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AEnemy> ClassRef;
+};
+
+class UEventsSubsystem;
 
 UCLASS()
 class SLASH_API AEnemy : public ABaseCharacter
@@ -162,6 +177,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	TSubclassOf<class ASoul> SoulClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	int32 EnemyID = 0;
+
+	UEventsSubsystem* EventsSubsystem;
+
 
 public:
 	FORCEINLINE void AddPatrolPoint(AActor* Point) { PatrolPoints.Add(Point); }
