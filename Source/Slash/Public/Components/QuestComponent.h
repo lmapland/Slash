@@ -23,7 +23,12 @@ struct FQuest
 	TArray<FObjective*> Objectives;
 };
 
-
+/*
+* Notes on ObjectiveType:
+* EOT_ItemAdded will send in how many items were added
+* EOT_AttributeUpdated will send in what the Attribute was updated TO
+*  This is an important distinction! It won't say how much the Attribute was updated by, only what the new value is!
+*/
 USTRUCT(Blueprintable)
 struct FObjective
 {
@@ -47,14 +52,18 @@ struct FObjective
 	* Will do [EventAmount] >= [ObjectiveAmount] logic
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Amount = -1;
+	int32 Amount = 1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Progress = 0;
 	
 	FObjective* NextObjective = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bComplete = false;
-
 };
+
+class UQuestsWidget;
 
 /*
 * This is so barebones
@@ -74,15 +83,23 @@ class SLASH_API UQuestComponent : public UActorComponent
 
 public:	
 	UQuestComponent();
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION()
 	void OnQuestEventCreated(EObjectiveType ObjectiveType, int32 ID, int32 Amount);
+
+	UFUNCTION()
+	void Setup(UQuestsWidget* InputWidget);
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	void CompleteObjective();
+
+	void CompleteQuest();
+
 	TArray<FQuest*> Quests;
-		
+
+	UQuestsWidget* QuestWidget;
+
 };

@@ -291,7 +291,6 @@ void ASlashCharacter::RemoveItem(int ItemID, int Amount)
 		else
 		{
 			//UE_LOG(LogTemp, Warning, TEXT("ASlashCharacter::AddItem(): (AddLenient) - (ItemID,Amount): (%i,%i) "), ItemID, Amount);
-			//TSubclassOf<AItem> ItemRef = Inventory->AddLenient(ItemID, Amount);
 			Inventory->RemoveItem(ItemID, Amount);
 		}
 	}
@@ -808,6 +807,10 @@ void ASlashCharacter::InitializeSlashOverlay()
 				SlashOverlay->SetGold(0);
 				SlashOverlay->SetSouls(0);
 				SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
+				if (Quests)
+				{
+					Quests->Setup(SlashOverlay->GetQuestWidget());
+				}
 			}
 		}
 	}

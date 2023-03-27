@@ -10,6 +10,5 @@ void UEventsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UEventsSubsystem::CreateEvent(EObjectiveType ObjectiveType, int32 ID, int32 Amount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UEventsSubsystem::CreateEvent() called"));
 	OnEventCreatedDelegate.Broadcast(ObjectiveType, ID, Amount);
 }

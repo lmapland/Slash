@@ -89,8 +89,14 @@ private:
 	
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* LevelProgressBar;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UQuestsWidget* QuestWidget;
 
 	FTimerHandle ClearItemPickupTimer;
 
 	float TimeUntilItemTextCleared = 3.f;
+
+public:
+	FORCEINLINE UQuestsWidget* GetQuestWidget() const { return QuestWidget; }
 };
