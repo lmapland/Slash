@@ -113,6 +113,9 @@ void AEnemy::Die_Implementation()
 {
 	Super::Die_Implementation();
 
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetGenerateOverlapEvents(false);
+
 	EnemyState = EEnemyState::EES_Dead;
 	ClearAttackTimer();
 	HideHealthBar();

@@ -245,6 +245,7 @@ void ASlashCharacter::AddItem(int ItemID, int Amount)
 		{
 			float ReturnedAttribute = Attributes->AddAttribute(ItemID, Amount);
 			SlashOverlay->UpdateAttribute(ItemID, ReturnedAttribute);
+			SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 		}
 		else
 		{

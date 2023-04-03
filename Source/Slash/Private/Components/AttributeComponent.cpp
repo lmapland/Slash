@@ -30,16 +30,16 @@ bool UAttributeComponent::Contains(int32 ItemID, int32 Amount)
 	switch (ItemID)
 	{
 	case 0:
-		return Health > Amount? true : false;
+		return Health >= Amount? true : false;
 		break;
 	case 1:
-		return Stamina > Amount ? true : false;
+		return Stamina >= Amount ? true : false;
 		break;
 	case 2:
-		return Souls > Amount ? true : false;
+		return Souls >= Amount ? true : false;
 		break;
 	case 3:
-		return Gold > Amount ? true : false;
+		return Gold >= Amount ? true : false;
 		break;
 	default:
 		return false;
