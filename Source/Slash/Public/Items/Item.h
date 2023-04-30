@@ -66,6 +66,8 @@ protected:
 	EItemState ItemState = EItemState::EIS_Equipped;
 
 private:
+	void PlayPickupSound();
+
 	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UCapsuleComponent> CapsuleComponent;
 

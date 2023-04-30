@@ -23,6 +23,7 @@ class AItem;
 class UParticleSystem;
 class APlayerController;
 class ALandscapeResource;
+class USoundBase;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
@@ -174,7 +175,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	EActionState ActionState = EActionState::EAS_Unoccupied;
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level Up")
+	USoundBase* LevelUpSound;
 
 private:
 	void InitializeSlashOverlay();

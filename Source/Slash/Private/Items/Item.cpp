@@ -8,6 +8,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Interfaces/PickupInterface.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -73,6 +74,14 @@ void AItem::SpawnPickupSystem()
 	}
 }
 
+void AItem::PlayPickupSound()
+{
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), PickupSound);
+	}
+}
+
 // Called every frame
 void AItem::Tick(float DeltaTime)
 {
@@ -95,5 +104,6 @@ void AItem::PickUp()
 {
 	SpawnPickupSystem();
 	PickedUp();
+	PlayPickupSound();
 	//GetWorldTimerManager().SetTimer(DestroySelfTimer, this, &AItem::PickedUp, 0.1f);
 }

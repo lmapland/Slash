@@ -678,14 +678,19 @@ void ASlashCharacter::HitReactEnd()
 
 void ASlashCharacter::RequestLevelUp()
 {
+	//UE_LOG(LogTemp, Warning, TEXT("In RequestLevelUp():"));
 	if (Attributes && SlashOverlay)
 	{
 		if (Attributes->LevelUp())
 		{
 			SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 			SlashOverlay->UpdateTabWidget(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);
-			UE_LOG(LogTemp, Warning, TEXT("Called UpdateTabWidget"));
 			if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_LeveledUp, Attributes->GetLevel(), -1);
+
+			if (LevelUpSound)
+			{
+				UGameplayStatics::PlaySound2D(GetWorld(), LevelUpSound);
+			}
 		}
 	}
 }
