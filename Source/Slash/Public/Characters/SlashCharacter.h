@@ -24,6 +24,7 @@ class UParticleSystem;
 class APlayerController;
 class ALandscapeResource;
 class USoundBase;
+class UNiagaraSystem;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
@@ -178,6 +179,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level Up")
 	USoundBase* LevelUpSound;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Level Up")
+	UNiagaraSystem* LevelUpParticles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "General")
+	FName MainMenuLevelName = TEXT("MainMenu");
+
 private:
 	void InitializeSlashOverlay();
 	void SetHUDHealth();
@@ -188,6 +195,7 @@ private:
 	AWeapon* SpawnWeapon(TSubclassOf<AItem> ItemRef);
 	AItem* SpawnItem(TSubclassOf<AItem> ItemRef);
 	void TossItem(AItem* ItemToToss);
+	void FinishDie();
 
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
 
@@ -281,6 +289,9 @@ private:
 	ALandscapeResource* OverlappingResource;
 
 	FTimerHandle InitilizationTimer;
+	FTimerHandle DeathTimer;
+
+	float DeathTime = 5.f;
 
 	bool bIsArmed; // Character currently has a weapon and it is in their hand
 
@@ -300,9 +311,14 @@ private:
 	TArray<FString> UseTypes;
 	int32 SlotIndex;
 
+	AItem* EquippedResourceTool = nullptr;
+
 
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE UInventory* GetInventory() const { return Inventory; }
 };

@@ -73,7 +73,7 @@ public:
 	FORCEINLINE int32 GetSouls() const { return Souls; }
 	FORCEINLINE int32 GetLevel() const { return Level; }
 	FORCEINLINE int32 GetSoulsUntilNextLevel() const { return SoulsPerLevel[Level]; }
-	FORCEINLINE float GetPercentToNextLevel() const { return (Souls * 1.f) / (SoulsPerLevel[Level] * 1.f); }
+	FORCEINLINE float GetPercentToNextLevel() const { return FMath::Clamp((Souls * 1.f) / (SoulsPerLevel[Level] * 1.f), 0.f, 1.f); }
 
 	FORCEINLINE void AddHealth(int32 Value) { Health = FMath::Clamp(Health + Value, 0.f, MaxHealth); }
 	FORCEINLINE void AddStamina(int32 Value) { Stamina = FMath::Clamp(Stamina + Value, 0.f, MaxStamina); }

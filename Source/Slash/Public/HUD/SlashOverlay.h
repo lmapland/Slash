@@ -38,6 +38,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Merchant")
 	void UpdateGold(int32 UserGold);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Overlay")
+	void ShowDeathWidget();
+
 	/*
 	* WBPs implement SetItemPickupText() and HideItemPickupText()
 	* When UpdateItemPickupText() is called (from anywhere that calls Inventory->AddItem(), basically),

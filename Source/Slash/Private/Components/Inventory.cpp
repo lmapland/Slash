@@ -281,6 +281,21 @@ void UInventory::PrintInventory()
 	}
 }
 
+int32 UInventory::GetAmountOf(int32 ItemID)
+{
+	if (!IsSetUp) return -1;
+
+	int32 Total = 0;
+	for (auto Slot : Slots)
+	{
+		if (Slot->ItemID == ItemID)
+		{
+			Total += Slot->CurrentStack;
+		}
+	}
+	return Total;
+}
+
 bool UInventory::Contains(int32 ItemID, int32 Amount)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): ItemID: %i, Amount: %i"), ItemID, Amount);

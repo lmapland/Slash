@@ -134,6 +134,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PrintInventory();
 
+	/* Returns the amount in the inventory of ItemID */
+	UFUNCTION(BlueprintCallable)
+	int32 GetAmountOf(int32 ItemID);
+
+	/* Contains at least as many as Amount of ItemID */
 	bool Contains(int32 ItemID, int32 Amount);
 
 	bool HasSpace(int32 ItemID, int32 Amount);

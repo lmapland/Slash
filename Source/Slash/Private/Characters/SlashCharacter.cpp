@@ -310,21 +310,29 @@ void ASlashCharacter::UseItem(int32 ItemID, int32 InventorySlot, int32 Amount)
 	// First need to know what the effects are: Get the DataTable element for this Name
 	FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ItemInUse)), "InventoryItems");
 
-	// Put the character into ItemUse State
 	UpdateActionState(EActionState::EAS_UsingItem);
-	// Play sound effect - from DT
+
 	if (ItemRow->UseSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ItemRow->UseSound, GetActorLocation());
 	}
-	// Play Particle effect - from DT
 	if (ItemRow->UseParticles)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ItemRow->UseParticles, GetActorLocation());
 	}
 
 	// Play animation (add end of anim function to end their item use and remove them from that state) - Anim Montage & Anim Section Name from DT
-	GetWorldTimerManager().SetTimer(InitilizationTimer, this, &ASlashCharacter::FinishUseItem, 2.f);
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ItemUseMontage && !ItemRow->UseAnimSectionName.IsNone())
+	{
+		AnimInstance->Montage_Play(ItemUseMontage, 1.f);
+		AnimInstance->Montage_JumpToSection(ItemRow->UseAnimSectionName, ItemUseMontage);
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(InitilizationTimer, this, &ASlashCharacter::FinishUseItem, 2.f);
+	}
 }
 
 void ASlashCharacter::DropItem(int32 SlotID, bool RemoveFromInventory)
@@ -413,6 +421,26 @@ void ASlashCharacter::Interact()
 		if (AnimInstance && GatheringMontage && OverlappingResource->Pickable())
 		{
 			UpdateActionState(EActionState::EAS_PickingUp);
+			int32 ToolID = OverlappingResource->GetToolID();
+			FName SocketToUse = OverlappingResource->GetToolSocketName();
+			if (ToolID > -1)
+			{
+				if (EquippedWeapon)
+				{
+					EquippedWeapon->GetMesh()->SetHiddenInGame(true);
+				}
+
+				// Get DT item
+				FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ToolID)), "SpawnResourceTool");
+				AItem* Spawned = SpawnItem(ItemRow->class_ref);
+				EquippedResourceTool = Spawned;
+
+				if (Spawned->GetMesh())
+				{
+					FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+					Spawned->GetMesh()->AttachToComponent(GetMesh(), TransformRules, SocketToUse);
+				}
+			}
 			OverlappingResource->Pick();
 			AddItem(OverlappingResource->GetItemID(), OverlappingResource->GetAmount());
 			AnimInstance->Montage_Play(GatheringMontage, OverlappingResource->AnimSpeed);
@@ -630,6 +658,9 @@ void ASlashCharacter::Die_Implementation()
 
 	UpdateActionState(EActionState::EAS_Dead);
 	DisableMeshCollision();
+	if (SlashOverlay) SlashOverlay->ShowDeathWidget();
+	UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->StartCameraFade(0.f, 1.f, DeathTime, FLinearColor::Black, false, true);
+	GetWorldTimerManager().SetTimer(DeathTimer, this, &ASlashCharacter::FinishDie, DeathTime);
 }
 
 void ASlashCharacter::AttachWeaponToBack()
@@ -665,10 +696,21 @@ void ASlashCharacter::AttachWeaponToHand()
 	UpdateActionState(EActionState::EAS_Unoccupied);
 }
 
+/* Called when the user completes the animaton for picking up a LandscapeResource */
 void ASlashCharacter::CompleteItemPickup()
 {
 	// Called by Anim Notify to un-stuck the character
 	UpdateActionState(EActionState::EAS_Unoccupied);
+
+	if (EquippedResourceTool)
+	{
+		EquippedResourceTool->Destroy();
+	}
+
+	if (EquippedWeapon && EquippedWeapon->GetMesh())
+	{
+		EquippedWeapon->GetMesh()->SetHiddenInGame(false);
+	}
 }
 
 void ASlashCharacter::HitReactEnd()
@@ -683,6 +725,7 @@ void ASlashCharacter::RequestLevelUp()
 	{
 		if (Attributes->LevelUp())
 		{
+			UE_LOG(LogTemp, Warning, TEXT("RequestLevelUp(): GetLevel: %i, GetPercentToNextLevel: %f"), Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 			SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 			SlashOverlay->UpdateTabWidget(Attributes->GetSouls(), Attributes->GetSoulsUntilNextLevel(), Attributes->GetLevel() + 1);
 			if (EventsSubsystem) EventsSubsystem->CreateEvent(EObjectiveType::EOT_LeveledUp, Attributes->GetLevel(), -1);
@@ -690,6 +733,10 @@ void ASlashCharacter::RequestLevelUp()
 			if (LevelUpSound)
 			{
 				UGameplayStatics::PlaySound2D(GetWorld(), LevelUpSound);
+			}
+			if (LevelUpParticles)
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), LevelUpParticles, GetActorLocation());
 			}
 		}
 	}
@@ -858,6 +905,7 @@ void ASlashCharacter::UpdateActionState(EActionState State)
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
 		break;
 	case EActionState::EAS_Unoccupied:
+		//UE_LOG(LogTemp, Warning, TEXT("EAS_Unoccupied: MaxWalkSpeed being updated to %f"), WalkSpeedNormal);
 		GetCharacterMovement()->MaxWalkSpeed = WalkSpeedNormal;
 		break;
 	case EActionState::EAS_Sprinting:
@@ -895,4 +943,9 @@ void ASlashCharacter::TossItem(AItem* ItemToToss)
 
 	ItemToToss->GetMesh()->SetSimulatePhysics(true);
 	ItemToToss->GetMesh()->AddImpulse(GetActorForwardVector() * 500 + FVector(0.f, 0.f, 250.f));
+}
+
+void ASlashCharacter::FinishDie()
+{
+	UGameplayStatics::OpenLevel(this, MainMenuLevelName);
 }

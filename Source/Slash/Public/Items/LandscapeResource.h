@@ -42,6 +42,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USphereComponent* Sphere;
 
+	// The tool, like a mining pick or an axe, to spawn for the animation
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	int32 TooltoUse = -1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	FName ToolSocket = FName("RightHandSocket");
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	int32 DropItem;
 	
@@ -60,5 +67,7 @@ public:
 	FORCEINLINE bool Pickable() const { return bPickable; }
 	FORCEINLINE int32 GetItemID() const { return DropItem; }
 	FORCEINLINE int32 GetAmount() const { return Amount; }
+	FORCEINLINE int32 GetToolID() const { return TooltoUse; }
+	FORCEINLINE FName GetToolSocketName() const { return ToolSocket; }
 
 };
