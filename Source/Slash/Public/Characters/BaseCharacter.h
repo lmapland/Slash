@@ -45,7 +45,10 @@ protected:
 	void PlayHitParticles(const FVector& ImpactPoint);
 	void DisableCapsule();
 	void DisableMeshCollision();
-	
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void DisplayDamageWidget(float Amount);
+
 	/** Montage */
 	virtual void PlayHitReactkMontage(const FName& SectionName);
 	virtual int32 PlayAttackMontage();
@@ -126,6 +129,10 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Montages)
 	TArray<FName> DeathMontageSections;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<UUserWidget> DamageWidget;
+
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }

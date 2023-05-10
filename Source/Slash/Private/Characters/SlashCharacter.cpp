@@ -223,6 +223,7 @@ float ASlashCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const&
 	HandleDamage(DamageAmount);
 	SetHUDHealth();
 	CombatTarget = EventInstigator->GetPawn();
+	DisplayDamageWidget(DamageAmount);
 
 	return DamageAmount;
 }
@@ -637,6 +638,7 @@ void ASlashCharacter::Equip1HWeapon(AWeapon* Weapon)
 	Weapon->Equip(GetMesh(), FName("RightHandSocket"), this, this);
 	CharacterState = ECharacterState::ECS_EquippedOneHandedWeapon;
 	EquippedWeapon = Weapon;
+	EquippedWeapon->UpdateDamageModifier(Attributes->GetLevel() * 0.1f + 1.f);
 	bIsArmed = true;
 }
 
@@ -737,6 +739,11 @@ void ASlashCharacter::RequestLevelUp()
 			if (LevelUpParticles)
 			{
 				UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), LevelUpParticles, GetActorLocation());
+			}
+
+			if (EquippedWeapon)
+			{
+				EquippedWeapon->UpdateDamageModifier(Attributes->GetLevel() * 0.1f + 1.f);
 			}
 		}
 	}

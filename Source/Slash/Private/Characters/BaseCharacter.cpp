@@ -54,27 +54,6 @@ void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type Collision
 	}
 }
 
-/*void ABaseCharacter::HandleOverlappingActors()
-{
-	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
-	{
-		TArray<AActor*> OverlappingActors;
-		EquippedWeapon->GetWeaponBox()->GetOverlappingActors(OverlappingActors);
-		if (OverlappingActors.Num() > 0)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("There is at least 1 Actor already overlapping"));
-			for (auto OA : OverlappingActors)
-			{
-				if (OA->Tags.Num() > 0)
-				{
-					//UE_LOG(LogTemp, Warning, TEXT("Tag: %s"), *OA->Tags[0].ToString());
-					EquippedWeapon->ExecuteOverlapWith(OA);
-				}
-			}
-		}
-	}
-}*/
-
 void ABaseCharacter::Attack()
 {
 	if (CombatTarget && CombatTarget->ActorHasTag(FName("Dead")))
@@ -85,7 +64,6 @@ void ABaseCharacter::Attack()
 
 void ABaseCharacter::AttackEnd()
 {
-
 }
 
 void ABaseCharacter::DodgeEnd()

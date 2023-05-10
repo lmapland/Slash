@@ -18,7 +18,6 @@ AWeapon::AWeapon()
 {
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("WeaponBox"));
 	WeaponBox->SetupAttachment(ItemMesh);
-	//WeaponBox->SetupAttachment(GetRootComponent());
 	WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
 	WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
@@ -28,11 +27,9 @@ AWeapon::AWeapon()
 
 	BoxTraceStart = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace Start"));
 	BoxTraceStart->SetupAttachment(ItemMesh);
-	//BoxTraceStart->SetupAttachment(GetRootComponent());
 
 	BoxTraceEnd = CreateDefaultSubobject<USceneComponent>(TEXT("Box Trace End"));
 	BoxTraceEnd->SetupAttachment(ItemMesh);
-	//BoxTraceEnd->SetupAttachment(GetRootComponent());
 
 	Damage = 25.f;
 }
@@ -64,7 +61,8 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 		// There's a chance that the OtherActor IS of a different group but the BoxTrace found a mob of the SAME group
 		// so, need another check here
 		if (BoxHit.GetActor()->ActorHasTag(MyGroup)) return;
-		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+		float DamageToDo = Damage * DamageModifier;
+		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), DamageToDo, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 
 		ExecuteGetHit(BoxHit);
 		CreateFields(BoxHit.ImpactPoint);

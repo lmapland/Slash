@@ -48,7 +48,7 @@ private:
 	FVector BoxTraceExtent = FVector(5.f);
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	bool bShowBoxDebug = false; 
+	bool bShowBoxDebug = false;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class USoundBase* EquipSound;
@@ -61,7 +61,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* BoxTraceEnd;
-	
+
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class UNiagaraSystem* TrailEffect;
 
@@ -70,8 +70,11 @@ private:
 	UNiagaraComponent* SpawnedNiagaraComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	float Damage;
+	float Damage = 15.f;
+
+	float DamageModifier = 1.f;
 
 public:
 	FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
+	FORCEINLINE void UpdateDamageModifier(float Value) { DamageModifier = Value; }
 };

@@ -56,6 +56,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 {
 	HandleDamage(DamageAmount);
 	CombatTarget = EventInstigator->GetPawn();
+	DisplayDamageWidget(DamageAmount);
 	
 	if (IsOutsideAttackRadius())
 	{
@@ -63,7 +64,6 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	}
 	else
 	{
-		//EnemyState = EEnemyState::EES_Attacking;
 		StartAttackTimer();
 	}
 

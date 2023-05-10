@@ -317,7 +317,12 @@ private:
 public:
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE EActionState GetActionState() const { return ActionState; }
+
+	UFUNCTION(BlueprintCallable)
 	FORCEINLINE USlashOverlay* GetSlashOverlay() const { return SlashOverlay; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE APlayerController* GetPlayerController() const { return PlayerController; }
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UInventory* GetInventory() const { return Inventory; }
