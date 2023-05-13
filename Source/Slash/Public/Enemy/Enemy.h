@@ -22,6 +22,7 @@ struct FEnemyStruct : public FTableRowBase
 };
 
 class UEventsSubsystem;
+class USphereComponent;
 
 UCLASS()
 class SLASH_API AEnemy : public ABaseCharacter
@@ -44,6 +45,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartPatrolling();
 
+	float GetForwardAngleToTarget(AActor* Target);
+
 protected:
 	/** <AActor> */
 	virtual void BeginPlay() override;
@@ -62,6 +65,12 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void SetExtraWeaponCollisionDisabled();
+	
+	UFUNCTION()
+	void OnAggroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION()
+	void OnAggroSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
@@ -99,16 +108,15 @@ private:
 	void ShowHealthBar();
 	void SpawnSoul();
 
-
-	UFUNCTION()
-	void PawnSeen(APawn* SeenPawn); // Callback for OnPawnSeen in UPawnSensingComponent
-
 	// AI Behavior
 	UPROPERTY(VisibleAnywhere)
 	class UHealthBarComponent* HealthBarWidget;
 
 	UPROPERTY(VisibleAnywhere)
 	class UPawnSensingComponent* PawnSensing;
+	
+	UPROPERTY(VisibleAnywhere)
+	USphereComponent* AggroSphere;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AWeapon> WeaponClass;
@@ -133,9 +141,6 @@ private:
 	*/
 	UPROPERTY(VisibleAnywhere)
 	AWeapon* ExtraWeaponInUse;
-	
-	UPROPERTY(EditAnywhere)
-	double CombatRadius = 500.0;
 
 	UPROPERTY(EditAnywhere)
 	double AttackRadius = 150.0;
@@ -143,6 +148,21 @@ private:
 	// For the MoveToTarget function: how close the Actor needs to be to the Target for the Move to be complete
 	UPROPERTY(EditAnywhere)
 	double AcceptanceRadius = 30.f;
+
+	float AggroRadius = 0.f;
+
+	/*
+	* In case the mob is blind in one eye or something; allow the aggro to be different on the left and right sides
+	* 0 is no angle: completely blind on one side. AggroAngleLeft should be between 0 and -180, and AggroAngleRight should be between 0 and +180
+	*/
+	UPROPERTY(EditAnywhere)
+	double AggroAngleLeft = -45;
+	
+	UPROPERTY(EditAnywhere)
+	double AggroAngleRight = 90;
+	
+	UPROPERTY(VisibleAnywhere)
+	ABaseCharacter* AggroTarget;
 
 	UPROPERTY()
 	class AAIController* EnemyController;
@@ -180,6 +200,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	int32 EnemyID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	float InterpSpeed = 5.f;
 
 	UEventsSubsystem* EventsSubsystem;
 

@@ -222,9 +222,12 @@ float ASlashCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const&
 {
 	HandleDamage(DamageAmount);
 	SetHUDHealth();
-	CombatTarget = EventInstigator->GetPawn();
-	DisplayDamageWidget(DamageAmount);
-
+	ABaseCharacter* Character = Cast<ABaseCharacter>(EventInstigator->GetPawn());
+	if (Character)
+	{
+		CombatTarget = Character;
+		DisplayDamageWidget(DamageAmount);
+	}
 	return DamageAmount;
 }
 

@@ -105,7 +105,7 @@ protected:
 	UAnimMontage* ItemUseMontage;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	AActor* CombatTarget;
+	ABaseCharacter* CombatTarget;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	double WarpTargetDistance = 75.f;

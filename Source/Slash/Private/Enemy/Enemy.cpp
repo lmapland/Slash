@@ -4,11 +4,13 @@
 #include "Enemy/Enemy.h"
 #include "AIController.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Subsystems/EventsSubsystem.h"
+#include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/QuestObjectiveTypes.h"
 #include "Components/AttributeComponent.h"
-#include "Components/BoxComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Subsystems/EventsSubsystem.h"
 #include "Perception/PawnSensingComponent.h"
 #include "HUD/HealthBarComponent.h"
 #include "Items/Weapon.h"
@@ -33,15 +35,43 @@ AEnemy::AEnemy()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
+	AggroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AggroSphere"));
+	AggroSphere->SetupAttachment(GetMesh());
+
 	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
-	PawnSensing->SetPeripheralVisionAngle(45.f);
-	PawnSensing->SightRadius = 4000.f;
+	PawnSensing->SightRadius = 0.f;
+	PawnSensing->bSeePawns = false;
 }
 
 void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (IsDead()) return;
+
+	if (CombatTarget)
+	{
+		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), CombatTarget->GetActorLocation());
+		FRotator LookAtRotationYaw(0.f, LookAtRotation.Yaw, 0.f);
+		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtRotationYaw, DeltaTime, InterpSpeed);
+		SetActorRotation(InterpRotation);
+	}
+	else if (!CombatTarget && AggroTarget && EnemyState <= EEnemyState::EES_Patrolling)
+	{
+		/*
+		* Currently has an aggrotarget: Target is within the sphere radius & is out of sight
+		* Want to check if the aggrotarget has moved within the sight radius
+		*/
+		float CurrentAngle = GetForwardAngleToTarget(AggroTarget);
+		//UE_LOG(LogTemp, Warning, TEXT("Tick(): AggroAngle: %f"), CurrentAngle);
+		if (CurrentAngle >= AggroAngleLeft && CurrentAngle <= AggroAngleRight)
+		{
+			CombatTarget = AggroTarget;
+			AggroTarget = nullptr;
+			ClearPatrolTimer();
+			StartChaseTarget();
+		}
+	}
+
 	if (EnemyState > EEnemyState::EES_Patrolling)
 	{
 		CheckCombatTarget();
@@ -55,16 +85,21 @@ void AEnemy::Tick(float DeltaTime)
 float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
 	HandleDamage(DamageAmount);
-	CombatTarget = EventInstigator->GetPawn();
-	DisplayDamageWidget(DamageAmount);
-	
-	if (IsOutsideAttackRadius())
+	ABaseCharacter* Character = Cast<ABaseCharacter>(EventInstigator->GetPawn());
+	if (Character)
 	{
-		StartChaseTarget();
-	}
-	else
-	{
-		StartAttackTimer();
+		CombatTarget = Character;
+		AggroTarget = nullptr;
+		DisplayDamageWidget(DamageAmount);
+
+		if (IsOutsideAttackRadius())
+		{
+			StartChaseTarget();
+		}
+		else
+		{
+			StartAttackTimer();
+		}
 	}
 
 	return DamageAmount;
@@ -101,7 +136,12 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	EnemyController = Cast<AAIController>(GetController());
-	if (PawnSensing) PawnSensing->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
+	//if (PawnSensing) PawnSensing->OnHearNoise.AddDyanmic(this, &AEnemy::NoiseHeard); // TODO
+
+	AggroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnAggroSphereOverlap);
+	AggroSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::OnAggroSphereEndOverlap);
+
+	AggroRadius = AggroSphere->GetScaledSphereRadius();
 
 	HideHealthBar();
 	MoveToTarget(PatrolTarget);
@@ -166,6 +206,31 @@ void AEnemy::StartPatrolling()
 	MoveToTarget(PatrolTarget);
 }
 
+/*
+ 0   = directly in front and numbers increase clockwise:
+ 90  = directly to the right
+ -90 = directly to the left
+ 180 / -180 is directly behind
+ Check DirectionalHitReact function for more info
+*/
+float AEnemy::GetForwardAngleToTarget(AActor* Target)
+{
+
+	FVector ActorLoc = Target->GetActorLocation();
+	const FVector ImpactLowered(ActorLoc.X, ActorLoc.Y, GetActorLocation().Z);
+	const FVector ToHit = (ImpactLowered - GetActorLocation()).GetSafeNormal();
+
+	// Forward * ToHit = |Forward||ToHit| * cost(theta)
+	// |Forward| == 1 && |ToHit| == 1, so Forward * ToHit = cos(theta)
+	double Theta = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(GetActorForwardVector(), ToHit)));
+
+	// If crossproduct points down, theta should be negative
+	const FVector CrossProduct = FVector::CrossProduct(GetActorForwardVector(), ToHit);
+	if (CrossProduct.Z < 0) Theta *= -1.f;
+
+	return Theta;
+}
+
 void AEnemy::SetExtraWeaponCollisionEnabled(int32 WeaponIndex)
 {
 	// only accepts enabled; enables the weapon at weapon index (if it's not bigger than the size of the array)
@@ -187,6 +252,38 @@ void AEnemy::SetExtraWeaponCollisionDisabled()
 	{
 		ExtraWeaponInUse->GetWeaponBox()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+}
+
+void AEnemy::OnAggroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	/* First check if the enemy should aggro on the target; return if no */
+	if (Tags.Num() == 0 || OtherActor->ActorHasTag(Tags[0])) return;
+	if (CombatTarget) return; /* Don't bother aggroing on a new enemy if they are currently engaged with one */
+	if (EnemyState == EEnemyState::EES_Dead) return; /* Don't execute this code if the enemy is dead */
+
+	/* Don't aggro on actors that aren't BaseCharacters */
+	ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
+	if (!Target) return;
+
+	float CurrentAngle = GetForwardAngleToTarget(OtherActor);
+	//UE_LOG(LogTemp, Warning, TEXT("OnAggroSphereOverlap(): %f"), CurrentAngle);
+
+	if (CurrentAngle >= AggroAngleLeft && CurrentAngle <= AggroAngleRight)
+	{
+		CombatTarget = Target;
+		AggroTarget = nullptr;
+		ClearPatrolTimer();
+		StartChaseTarget();
+	}
+	else
+	{
+		AggroTarget = Target;
+	}
+}
+
+void AEnemy::OnAggroSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	AggroTarget = nullptr;
 }
 
 // private
@@ -262,6 +359,7 @@ void AEnemy::LoseInterest()
 
 void AEnemy::StartChaseTarget()
 {
+	//UE_LOG(LogTemp, Warning, TEXT("StartChaseTarget()"));
 	EnemyState = EEnemyState::EES_Chasing;
 	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
 	ShowHealthBar();
@@ -271,7 +369,7 @@ void AEnemy::StartChaseTarget()
 bool AEnemy::IsOutsideCombatRadius()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("DistanceRadius, CombatRadius: %d, %d"), (CombatTarget->GetActorLocation() - GetActorLocation()).Size(), CombatRadius);
-	return !InTargetRange(CombatTarget, CombatRadius);
+	return !InTargetRange(CombatTarget, AggroRadius);
 }
 
 bool AEnemy::IsOutsideAttackRadius()
@@ -335,12 +433,6 @@ void AEnemy::MoveToTarget(AActor* TheTarget, double Distance, FColor DebugColor)
 	MoveRequest.SetAcceptanceRadius(AcceptanceDistance);
 
 	EnemyController->MoveTo(MoveRequest, &NavPath);
-
-	/*TArray<FNavPathPoint>& PathPoint = NavPath->GetPathPoints();
-	for (auto Point : PathPoint)
-	{
-		DrawDebugSphere(GetWorld(), Point.Location, 3.f, 8, DebugColor, false, 10.f);
-	}*/
 }
 
 void AEnemy::SpawnDefaultWeapons()
@@ -392,23 +484,5 @@ void AEnemy::SpawnSoul()
 			SpawnedSoul->SetSouls(Attributes->GetSouls());
 			SpawnedSoul->SetOwner(this);
 		}
-	}
-}
-
-void AEnemy::PawnSeen(APawn* SeenPawn)
-{
-	//UE_LOG(LogTemp, Warning, TEXT("In PawnSeen()"));
-	if (Tags.Num() == 0 || SeenPawn->ActorHasTag(Tags[0])) return;
-	//UE_LOG(LogTemp, Warning, TEXT("In PawnSeen(): Pawn passed Tag check"));
-	const bool bShouldChaseTarget =
-		EnemyState <= EEnemyState::EES_Chasing &&
-		EnemyState != EEnemyState::EES_Dead;
-
-	if (bShouldChaseTarget)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("In PawnSeen(): Enemy will chase target"));
-		CombatTarget = SeenPawn;
-		ClearPatrolTimer();
-		StartChaseTarget();
 	}
 }
