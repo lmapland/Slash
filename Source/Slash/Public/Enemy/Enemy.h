@@ -86,7 +86,6 @@ private:
 	// AI Behavior
 	void CheckPatrolTarget();
 	void CheckCombatTarget();
-	void CheckCombatTarget2();
 	AActor* ChoosePatrolTarget();
 	void PatrolTimerFinished();
 	void LoseInterest();
@@ -162,7 +161,7 @@ private:
 	double AggroAngleRight = 90;
 	
 	UPROPERTY(VisibleAnywhere)
-	ABaseCharacter* AggroTarget;
+	TArray<ABaseCharacter*> AggroTargets;
 
 	UPROPERTY()
 	class AAIController* EnemyController;

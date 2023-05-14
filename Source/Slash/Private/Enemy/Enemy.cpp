@@ -55,18 +55,27 @@ void AEnemy::Tick(float DeltaTime)
 		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtRotationYaw, DeltaTime, InterpSpeed);
 		SetActorRotation(InterpRotation);
 	}
-	else if (!CombatTarget && AggroTarget && EnemyState <= EEnemyState::EES_Patrolling)
+	else if (!CombatTarget && AggroTargets.Num() > 0 && EnemyState <= EEnemyState::EES_Patrolling)
 	{
 		/*
-		* Currently has an aggrotarget: Target is within the sphere radius & is out of sight
-		* Want to check if the aggrotarget has moved within the sight radius
+		* Currently has at least one aggrotarget: Target is within the sphere radius & is out of sight
+		* Want to check if any aggrotargets have moved within the sight radius
 		*/
-		float CurrentAngle = GetForwardAngleToTarget(AggroTarget);
-		//UE_LOG(LogTemp, Warning, TEXT("Tick(): AggroAngle: %f"), CurrentAngle);
-		if (CurrentAngle >= AggroAngleLeft && CurrentAngle <= AggroAngleRight)
+		ABaseCharacter* NewCombatTarget = nullptr;
+		for (auto AggroTarget : AggroTargets)
 		{
-			CombatTarget = AggroTarget;
-			AggroTarget = nullptr;
+			float CurrentAngle = GetForwardAngleToTarget(AggroTarget);
+			//UE_LOG(LogTemp, Warning, TEXT("Tick(): AggroAngle: %f"), CurrentAngle);
+			if (CurrentAngle >= AggroAngleLeft && CurrentAngle <= AggroAngleRight)
+			{
+				NewCombatTarget = AggroTarget;
+			}
+		}
+		if (NewCombatTarget)
+		{
+			CombatTarget = NewCombatTarget;
+			UE_LOG(LogTemp, Warning, TEXT("Tick, clearing AggroTargets %s: %s"), *GetName(), *NewCombatTarget->GetName());
+			AggroTargets.Empty();
 			ClearPatrolTimer();
 			StartChaseTarget();
 		}
@@ -89,7 +98,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	if (Character)
 	{
 		CombatTarget = Character;
-		AggroTarget = nullptr;
+		AggroTargets.Empty();
 		DisplayDamageWidget(DamageAmount);
 
 		if (IsOutsideAttackRadius())
@@ -271,19 +280,37 @@ void AEnemy::OnAggroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	if (CurrentAngle >= AggroAngleLeft && CurrentAngle <= AggroAngleRight)
 	{
 		CombatTarget = Target;
-		AggroTarget = nullptr;
+		//UE_LOG(LogTemp, Warning, TEXT("OnAggroSphereOverlap, emptying array: %s: %s"), *GetName(), *OtherActor->GetName());
+		AggroTargets.Empty();
 		ClearPatrolTimer();
 		StartChaseTarget();
 	}
 	else
 	{
-		AggroTarget = Target;
+		//UE_LOG(LogTemp, Warning, TEXT("OnAggroSphereOverlap, adding new element %s: %s"), *GetName(), *OtherActor->GetName());
+		AggroTargets.AddUnique(Target);
 	}
 }
 
 void AEnemy::OnAggroSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	AggroTarget = nullptr;
+	ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
+	if (!Target) return;
+
+	ABaseCharacter* ToRemove = nullptr;
+	for (auto AggroTarget : AggroTargets)
+	{
+		if (AggroTarget == OtherActor)
+		{
+			ToRemove = AggroTarget;
+		}
+	}
+
+	if (ToRemove)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("ONAggroSphereENDOverlap, removing element: %s: %s"), *GetName(), *OtherActor->GetName());
+		AggroTargets.Remove(ToRemove);
+	}
 }
 
 // private
@@ -309,9 +336,8 @@ void AEnemy::CheckCombatTarget()
 {
 	if (IsOutsideCombatRadius())
 	{
-		// Called in the case that Character is behind Enemy or ALSO character is being chased because of PawnSeen()
-		// In the latter case, every .5s the Enemy will lose interest in the character and then regain interest through PawnSeen()
-		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideCombatRadius()"));
+		// Character / other enemy has been spotted but is not within this Enemy's combat radius
+		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideCombatRadius() %s: %s, %f, %f"), *GetName(), *CombatTarget->GetName(), AggroRadius, (CombatTarget->GetActorLocation() - GetActorLocation()).Size());
 		ClearAttackTimer();
 		LoseInterest();
 		if (!IsEngaged()) StartPatrolling();
@@ -319,14 +345,14 @@ void AEnemy::CheckCombatTarget()
 	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
 		// Enemy is probably Attacking or Engaging and and Character has moved outside of Attack Radius
-		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideAttackRadius() && !IsChasing()"));
+		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideAttackRadius() && !IsChasing() %s: %s"), *GetName(), *CombatTarget->GetName());
 		ClearAttackTimer();
 		if (!IsEngaged()) StartChaseTarget();
 	}
 	else if (CanAttack())
 	{
 		// Enemy is inside AttackRadius, Enemy may be Patrolling and turned away
-		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): Attacking"));
+		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): Attacking %s: %s"), *GetName(), *CombatTarget->GetName());
 		ClearPatrolTimer();
 		if (!IsEngaged()) StartAttackTimer();
 	}
@@ -368,7 +394,7 @@ void AEnemy::StartChaseTarget()
 
 bool AEnemy::IsOutsideCombatRadius()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("DistanceRadius, CombatRadius: %d, %d"), (CombatTarget->GetActorLocation() - GetActorLocation()).Size(), CombatRadius);
+	//UE_LOG(LogTemp, Warning, TEXT("DistanceRadius, CombatRadius: %d, %d"), (CombatTarget->GetActorLocation() - GetActorLocation()).Size(), AggroRadius);
 	return !InTargetRange(CombatTarget, AggroRadius);
 }
 
