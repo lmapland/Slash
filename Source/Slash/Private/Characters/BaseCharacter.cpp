@@ -28,11 +28,11 @@ void ABaseCharacter::BeginPlay()
 	
 }
 
-void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+void ABaseCharacter::GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter)
 {
 	if (IsAlive())
 	{
-		DirectionalHitReact(ImpactPoint, Hitter);
+		if (ShouldHitReact(DamageDealt, Attributes->GetHealth())) DirectionalHitReact(ImpactPoint, Hitter);
 	}
 	else Die();
 
@@ -68,6 +68,11 @@ void ABaseCharacter::AttackEnd()
 
 void ABaseCharacter::DodgeEnd()
 {
+}
+
+bool ABaseCharacter::ShouldHitReact(float DamageDealt, float CurrentHealth)
+{
+	return (DamageDealt / CurrentHealth) >= HitReactThreshold;
 }
 
 int32 ABaseCharacter::PlayAttackMontage()
@@ -163,6 +168,7 @@ void ABaseCharacter::PlayHitReactkMontage(const FName& SectionName)
 
 void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint, AActor* Hitter)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%s HitReacting!"), *GetName())
 	FVector ActorLoc = Hitter->GetActorLocation();
 	const FVector Forward = GetActorForwardVector();
 	const FVector ImpactLowered(ActorLoc.X, ActorLoc.Y, GetActorLocation().Z);

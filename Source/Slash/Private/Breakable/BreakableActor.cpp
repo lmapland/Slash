@@ -23,7 +23,7 @@ ABreakableActor::ABreakableActor()
 
 }
 
-void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter)
 {
 	if (TreasureClasses.Num() > 0)
 	{

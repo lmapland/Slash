@@ -128,14 +128,18 @@ void AEnemy::Destroyed()
 	}
 }
 
-void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter)
 {
 	if (!IsDead()) ShowHealthBar();
-	Super::GetHit_Implementation(ImpactPoint, Hitter);
-	ClearAttackTimer();
-	StopAttackMontage();
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetExtraWeaponCollisionDisabled();
+	Super::GetHit_Implementation(ImpactPoint, DamageDealt, Hitter);
+
+	if (ShouldHitReact(DamageDealt, Attributes->GetHealth()))
+	{
+		ClearAttackTimer();
+		StopAttackMontage();
+		SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+		SetExtraWeaponCollisionDisabled();
+	}
 }
 
 //protected
@@ -513,5 +517,4 @@ void AEnemy::UpdateEnemyState(EEnemyState State)
 		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
 		break;
 	}
-
 }

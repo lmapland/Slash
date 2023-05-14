@@ -207,14 +207,17 @@ void ASlashCharacter::Jump()
 	Super::Jump();
 }
 
-void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
+void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter)
 {
-	Super::GetHit_Implementation(ImpactPoint, Hitter);
+	Super::GetHit_Implementation(ImpactPoint, DamageDealt, Hitter);
 
-	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (Attributes && Attributes->GetHealth() > 0.f)
 	{
-		UpdateActionState(EActionState::EAS_HitReaction);
+		if (ShouldHitReact(DamageDealt, Attributes->GetHealth()))
+		{
+			SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+			UpdateActionState(EActionState::EAS_HitReaction);
+		}
 	}
 }
 

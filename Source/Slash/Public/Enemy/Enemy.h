@@ -39,7 +39,7 @@ public:
 	/** </AActor> */
 
 	/** <IHitInterface> */
-	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter) override;
 	/** </IHitInterface> */
 
 	UFUNCTION(BlueprintCallable)

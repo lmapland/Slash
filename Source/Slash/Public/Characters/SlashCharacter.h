@@ -36,7 +36,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void Jump() override;
-	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	virtual void SetOverlappingItem(AItem* Item) override;
 	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;

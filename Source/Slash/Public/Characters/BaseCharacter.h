@@ -31,7 +31,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 	/** Combat */
-	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter) override;
 	virtual bool CanAttack();
 	virtual void Attack();
 
@@ -70,6 +70,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void DodgeEnd();
 
+	bool ShouldHitReact(float DamageDealt, float CurrentHealth);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAttributeComponent* Attributes;
@@ -133,6 +134,8 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UUserWidget> DamageWidget;
 
+	UPROPERTY(EditAnywhere, Category = HitReact)
+	float HitReactThreshold = 0.25f;
 
 public:
 	FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
