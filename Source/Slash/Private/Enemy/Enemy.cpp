@@ -75,9 +75,7 @@ void AEnemy::Tick(float DeltaTime)
 		{
 			CombatTarget = NewCombatTarget;
 			UE_LOG(LogTemp, Warning, TEXT("Tick, clearing AggroTargets %s: %s"), *GetName(), *NewCombatTarget->GetName());
-			AggroTargets.Empty();
-			ClearPatrolTimer();
-			StartChaseTarget();
+			UpdateEnemyState(EEnemyState::EES_Chasing);
 		}
 	}
 
@@ -103,11 +101,11 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 
 		if (IsOutsideAttackRadius())
 		{
-			StartChaseTarget();
+			UpdateEnemyState(EEnemyState::EES_Chasing);
 		}
 		else
 		{
-			StartAttackTimer();
+			UpdateEnemyState(EEnemyState::EES_Attacking);
 		}
 	}
 
@@ -165,12 +163,11 @@ void AEnemy::Die_Implementation()
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetGenerateOverlapEvents(false);
 
-	EnemyState = EEnemyState::EES_Dead;
+	UpdateEnemyState(EEnemyState::EES_Dead);
 	ClearAttackTimer();
 	HideHealthBar();
 	DisableCapsule();
 	SetLifeSpan(5.f);
-	//GetCharacterMovement()->bOrientRotationToMovement = false;
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetExtraWeaponCollisionDisabled();
 	SpawnSoul();
@@ -182,7 +179,7 @@ void AEnemy::Attack()
 	Super::Attack();
 
 	if (CombatTarget == nullptr) return;
-	EnemyState = EEnemyState::EES_Engaged;
+	UpdateEnemyState(EEnemyState::EES_Engaged);
 	PlayAttackMontage();
 }
 
@@ -203,16 +200,12 @@ void AEnemy::HandleDamage(float DamageAmount)
 
 void AEnemy::AttackEnd()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("In Enemy::AttackEnd()"));
-	EnemyState = EEnemyState::EES_NoState;
-	CheckCombatTarget();
+	UpdateEnemyState(EEnemyState::EES_NoState);
 }
 
 void AEnemy::StartPatrolling()
 {
-	EnemyState = EEnemyState::EES_Patrolling;
-	GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
-	MoveToTarget(PatrolTarget);
+	UpdateEnemyState(EEnemyState::EES_Patrolling);
 }
 
 /*
@@ -281,9 +274,7 @@ void AEnemy::OnAggroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		CombatTarget = Target;
 		//UE_LOG(LogTemp, Warning, TEXT("OnAggroSphereOverlap, emptying array: %s: %s"), *GetName(), *OtherActor->GetName());
-		AggroTargets.Empty();
-		ClearPatrolTimer();
-		StartChaseTarget();
+		UpdateEnemyState(EEnemyState::EES_Chasing);
 	}
 	else
 	{
@@ -340,21 +331,21 @@ void AEnemy::CheckCombatTarget()
 		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideCombatRadius() %s: %s, %f, %f"), *GetName(), *CombatTarget->GetName(), AggroRadius, (CombatTarget->GetActorLocation() - GetActorLocation()).Size());
 		ClearAttackTimer();
 		LoseInterest();
-		if (!IsEngaged()) StartPatrolling();
+		if (!IsEngaged()) UpdateEnemyState(EEnemyState::EES_Patrolling);
 	}
 	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
 		// Enemy is probably Attacking or Engaging and and Character has moved outside of Attack Radius
 		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideAttackRadius() && !IsChasing() %s: %s"), *GetName(), *CombatTarget->GetName());
 		ClearAttackTimer();
-		if (!IsEngaged()) StartChaseTarget();
+		if (!IsEngaged()) UpdateEnemyState(EEnemyState::EES_Chasing);
 	}
 	else if (CanAttack())
 	{
 		// Enemy is inside AttackRadius, Enemy may be Patrolling and turned away
 		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): Attacking %s: %s"), *GetName(), *CombatTarget->GetName());
 		ClearPatrolTimer();
-		if (!IsEngaged()) StartAttackTimer();
+		if (!IsEngaged()) UpdateEnemyState(EEnemyState::EES_Attacking);
 	}
 }
 
@@ -381,15 +372,6 @@ void AEnemy::LoseInterest()
 {
 	CombatTarget = nullptr;
 	HideHealthBar();
-}
-
-void AEnemy::StartChaseTarget()
-{
-	//UE_LOG(LogTemp, Warning, TEXT("StartChaseTarget()"));
-	EnemyState = EEnemyState::EES_Chasing;
-	GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
-	ShowHealthBar();
-	MoveToTarget(CombatTarget);
 }
 
 bool AEnemy::IsOutsideCombatRadius()
@@ -426,13 +408,6 @@ bool AEnemy::IsEngaged()
 void AEnemy::ClearPatrolTimer()
 {
 	GetWorldTimerManager().ClearTimer(PatrolTimer);
-}
-
-void AEnemy::StartAttackTimer()
-{
-	EnemyState = EEnemyState::EES_Attacking;
-	const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
-	GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
 }
 
 void AEnemy::ClearAttackTimer()
@@ -511,4 +486,32 @@ void AEnemy::SpawnSoul()
 			SpawnedSoul->SetOwner(this);
 		}
 	}
+}
+
+void AEnemy::UpdateEnemyState(EEnemyState State)
+{
+	EnemyState = State;
+
+	switch (State)
+	{
+	case EEnemyState::EES_NoState:
+		CheckCombatTarget();
+		break;
+	case EEnemyState::EES_Patrolling:
+		GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
+		MoveToTarget(PatrolTarget);
+		break;
+	case EEnemyState::EES_Chasing:
+		GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
+		ShowHealthBar();
+		ClearPatrolTimer();
+		AggroTargets.Empty();
+		MoveToTarget(CombatTarget);
+		break;
+	case EEnemyState::EES_Attacking:
+		const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
+		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
+		break;
+	}
+
 }

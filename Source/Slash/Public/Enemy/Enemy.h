@@ -89,7 +89,6 @@ private:
 	AActor* ChoosePatrolTarget();
 	void PatrolTimerFinished();
 	void LoseInterest();
-	void StartChaseTarget();
 	bool IsOutsideCombatRadius();
 	bool IsOutsideAttackRadius();
 	bool IsChasing();
@@ -98,7 +97,6 @@ private:
 	bool IsEngaged();
 	//bool IsPatrolling();
 	void ClearPatrolTimer();
-	void StartAttackTimer();
 	void ClearAttackTimer();
 	bool InTargetRange(AActor* Target, double Radius);
 	void MoveToTarget(AActor* TheTarget, double Distance = 0.f, FColor DebugColor = FColor::Green);
@@ -106,6 +104,7 @@ private:
 	void HideHealthBar();
 	void ShowHealthBar();
 	void SpawnSoul();
+	void UpdateEnemyState(EEnemyState State);
 
 	// AI Behavior
 	UPROPERTY(VisibleAnywhere)
@@ -155,10 +154,10 @@ private:
 	* 0 is no angle: completely blind on one side. AggroAngleLeft should be between 0 and -180, and AggroAngleRight should be between 0 and +180
 	*/
 	UPROPERTY(EditAnywhere)
-	double AggroAngleLeft = -45;
+	double AggroAngleLeft = -60;
 	
 	UPROPERTY(EditAnywhere)
-	double AggroAngleRight = 90;
+	double AggroAngleRight = 60;
 	
 	UPROPERTY(VisibleAnywhere)
 	TArray<ABaseCharacter*> AggroTargets;
