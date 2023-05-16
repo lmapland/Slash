@@ -6,6 +6,7 @@
 #include "Characters/BaseCharacter.h"
 #include "Interfaces/HitInterface.h"
 #include "Characters/CharacterTypes.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "Engine/DataTable.h"
 #include "Enemy.generated.h"
 
@@ -21,8 +22,16 @@ struct FEnemyStruct : public FTableRowBase
 	TSubclassOf<AEnemy> ClassRef;
 };
 
+class AWeapon;
 class UEventsSubsystem;
 class USphereComponent;
+class UHealthBarComponent;
+class UCombatStateComponent;
+class UAIPerceptionComponent;
+class UAISenseConfig_Hearing;
+struct FAIStimulus;
+struct FAIRequestID;
+struct FPathFollowingResult;
 
 UCLASS()
 class SLASH_API AEnemy : public ABaseCharacter
@@ -44,6 +53,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartPatrolling();
+
+	UFUNCTION()
+	void OnPerception(AActor* Actor, FAIStimulus Stimulus);
 
 	float GetForwardAngleToTarget(AActor* Target);
 
@@ -88,42 +100,51 @@ private:
 	void CheckCombatTarget();
 	AActor* ChoosePatrolTarget();
 	void PatrolTimerFinished();
-	void LoseInterest();
 	bool IsOutsideCombatRadius();
 	bool IsOutsideAttackRadius();
 	bool IsChasing();
 	bool IsAttacking();
 	bool IsDead();
 	bool IsEngaged();
-	//bool IsPatrolling();
+	bool IsAlerting();
+	bool IsInCombat();
 	void ClearPatrolTimer();
 	void ClearAttackTimer();
+	void ClearAlertTimer();
 	bool InTargetRange(AActor* Target, double Radius);
 	void MoveToTarget(AActor* TheTarget, double Distance = 0.f, FColor DebugColor = FColor::Green);
 	void SpawnDefaultWeapons();
 	void HideHealthBar();
 	void ShowHealthBar();
+	void SetCombatIndicatorWidgetState(int32 CombatState);
 	void SpawnSoul();
 	void UpdateEnemyState(EEnemyState State);
+	bool FindNavigablePath(FVector DesiredLocation);
+	void MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result);
 
 	// AI Behavior
 	UPROPERTY(VisibleAnywhere)
-	class UHealthBarComponent* HealthBarWidget;
+	UHealthBarComponent* HealthBarWidget;
 
 	UPROPERTY(VisibleAnywhere)
-	class UPawnSensingComponent* PawnSensing;
-	
+	UCombatStateComponent* CombatStateWidget;
+
 	UPROPERTY(VisibleAnywhere)
 	USphereComponent* AggroSphere;
+	
+	UPROPERTY(VisibleAnywhere)
+	UAIPerceptionComponent* AIPerceptionComponent;
 
+	UAISenseConfig_Hearing* Hearing;
+	
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AWeapon> WeaponClass;
+	TSubclassOf<AWeapon> WeaponClass;
 	
 	/* If the enemy hits with more than 1 weapon, this handles that case */
 
 	// holds the list of Weapon Classes to use for each body part
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<class AWeapon>> WeaponClasses;
+	TArray<TSubclassOf<AWeapon>> WeaponClasses;
 
 	// holds the corresponding sockets those Weapons should be attached
 	UPROPERTY(EditAnywhere)
@@ -189,7 +210,16 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float ChasingSpeed = 300.f;
+
+	UPROPERTY(EditAnywhere, Category = Alerting)
+	FTimerHandle AlertTimer;
+
+	UPROPERTY(EditAnywhere, Category = Alerting)
+	float AlertWaitTime = 3.f;
 	
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float AlertingSpeed = 200.f;
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	float DeathLifeSpan = 8.f;
 
@@ -201,6 +231,12 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	float InterpSpeed = 5.f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	FVector AlertingLocation;
+
+	/* To make sure at least part of the actor is in-range */
+	float OverlapLeniency = 50.f;
 
 	UEventsSubsystem* EventsSubsystem;
 

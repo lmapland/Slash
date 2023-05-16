@@ -11,10 +11,14 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Subsystems/EventsSubsystem.h"
-#include "Perception/PawnSensingComponent.h"
 #include "HUD/HealthBarComponent.h"
+#include "HUD/CombatStateComponent.h"
 #include "Items/Weapon.h"
 #include "Items/Soul.h"
+#include "Perception/AISenseConfig_Hearing.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Navigation/PathFollowingComponent.h"
+//#include "DrawDebugHelpers.h"
 
 // public
 AEnemy::AEnemy()
@@ -30,17 +34,23 @@ AEnemy::AEnemy()
 	HealthBarWidget = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBar"));
 	HealthBarWidget->SetupAttachment(GetRootComponent());
 
+	CombatStateWidget = CreateDefaultSubobject<UCombatStateComponent>(TEXT("CombatState"));
+	CombatStateWidget->SetupAttachment(GetRootComponent());
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
 	AggroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AggroSphere"));
-	AggroSphere->SetupAttachment(GetMesh());
+	AggroSphere->SetupAttachment(GetRootComponent());
 
-	PawnSensing = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
-	PawnSensing->SightRadius = 0.f;
-	PawnSensing->bSeePawns = false;
+	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
+	Hearing = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
+	Hearing->HearingRange = 3000.f;
+	Hearing->DetectionByAffiliation.bDetectEnemies = true;
+	AIPerceptionComponent->ConfigureSense(*Hearing);
+	AIPerceptionComponent->SetDominantSense(Hearing->GetSenseImplementation());
 }
 
 void AEnemy::Tick(float DeltaTime)
@@ -55,7 +65,7 @@ void AEnemy::Tick(float DeltaTime)
 		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtRotationYaw, DeltaTime, InterpSpeed);
 		SetActorRotation(InterpRotation);
 	}
-	else if (!CombatTarget && AggroTargets.Num() > 0 && EnemyState <= EEnemyState::EES_Patrolling)
+	else if (!CombatTarget && AggroTargets.Num() > 0 && EnemyState <= EEnemyState::EES_Alerting)
 	{
 		/*
 		* Currently has at least one aggrotarget: Target is within the sphere radius & is out of sight
@@ -147,7 +157,10 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	EnemyController = Cast<AAIController>(GetController());
-	//if (PawnSensing) PawnSensing->OnHearNoise.AddDyanmic(this, &AEnemy::NoiseHeard); // TODO
+
+	AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemy::OnPerception);
+
+	EnemyController->GetPathFollowingComponent()->OnRequestFinished.AddUObject(this, &AEnemy::MoveCompleted);
 
 	AggroSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnAggroSphereOverlap);
 	AggroSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::OnAggroSphereEndOverlap);
@@ -155,6 +168,7 @@ void AEnemy::BeginPlay()
 	AggroRadius = AggroSphere->GetScaledSphereRadius();
 
 	HideHealthBar();
+	SetCombatIndicatorWidgetState(0);
 	MoveToTarget(PatrolTarget);
 	SpawnDefaultWeapons();
 	EventsSubsystem = GetGameInstance()->GetSubsystem<UEventsSubsystem>();
@@ -170,6 +184,7 @@ void AEnemy::Die_Implementation()
 	UpdateEnemyState(EEnemyState::EES_Dead);
 	ClearAttackTimer();
 	HideHealthBar();
+	SetCombatIndicatorWidgetState(0);
 	DisableCapsule();
 	SetLifeSpan(5.f);
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -189,7 +204,7 @@ void AEnemy::Attack()
 
 bool AEnemy::CanAttack()
 {
-	return !IsOutsideCombatRadius() && (!IsAttacking() || !GetWorldTimerManager().IsTimerActive(AttackTimer)) && !IsDead() && !IsEngaged();
+	return !IsOutsideAttackRadius() && (!IsAttacking() || !GetWorldTimerManager().IsTimerActive(AttackTimer)) && !IsDead() && !IsEngaged();
 }
 
 void AEnemy::HandleDamage(float DamageAmount)
@@ -210,6 +225,21 @@ void AEnemy::AttackEnd()
 void AEnemy::StartPatrolling()
 {
 	UpdateEnemyState(EEnemyState::EES_Patrolling);
+}
+
+void AEnemy::OnPerception(AActor* Actor, FAIStimulus Stimulus)
+{
+	// Don't interupt the enemy if they're already fighting
+	// A new alert will interupt an old one
+	if (IsInCombat()) return;
+
+	ABaseCharacter* Char = Cast<ABaseCharacter>(Actor);
+	
+	if (Char && Stimulus.WasSuccessfullySensed())
+	{
+		AlertingLocation = Stimulus.StimulusLocation;
+		UpdateEnemyState(EEnemyState::EES_Alerting);
+	}
 }
 
 /*
@@ -332,10 +362,19 @@ void AEnemy::CheckCombatTarget()
 	if (IsOutsideCombatRadius())
 	{
 		// Character / other enemy has been spotted but is not within this Enemy's combat radius
-		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideCombatRadius() %s: %s, %f, %f"), *GetName(), *CombatTarget->GetName(), AggroRadius, (CombatTarget->GetActorLocation() - GetActorLocation()).Size());
+		//if (CombatTarget != nullptr) UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): IsOutsideCombatRadius() %s: %s, %f, %f"), *GetName(), *CombatTarget->GetName(), AggroRadius, (CombatTarget->GetActorLocation() - GetActorLocation()).Size());
 		ClearAttackTimer();
-		LoseInterest();
-		if (!IsEngaged()) UpdateEnemyState(EEnemyState::EES_Patrolling);
+		
+		if (IsInCombat() && CombatTarget != nullptr)
+		{
+			AlertingLocation = CombatTarget->GetActorLocation();
+			UpdateEnemyState(EEnemyState::EES_Alerting);
+		}
+		if (!IsEngaged() && !IsAlerting())
+		{
+			//UE_LOG(LogTemp, Warning, TEXT("CheckCombatTarget(): About to set state to Patrolling"));
+			UpdateEnemyState(EEnemyState::EES_Patrolling);
+		}
 	}
 	else if (IsOutsideAttackRadius() && !IsChasing())
 	{
@@ -348,8 +387,7 @@ void AEnemy::CheckCombatTarget()
 	{
 		// Enemy is inside AttackRadius, Enemy may be Patrolling and turned away
 		//UE_LOG(LogTemp, Warning, TEXT("In CheckCombatTarget(): Attacking %s: %s"), *GetName(), *CombatTarget->GetName());
-		ClearPatrolTimer();
-		if (!IsEngaged()) UpdateEnemyState(EEnemyState::EES_Attacking);
+		UpdateEnemyState(EEnemyState::EES_Attacking);
 	}
 }
 
@@ -372,16 +410,10 @@ void AEnemy::PatrolTimerFinished()
 	MoveToTarget(PatrolTarget);
 }
 
-void AEnemy::LoseInterest()
-{
-	CombatTarget = nullptr;
-	HideHealthBar();
-}
-
 bool AEnemy::IsOutsideCombatRadius()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("DistanceRadius, CombatRadius: %d, %d"), (CombatTarget->GetActorLocation() - GetActorLocation()).Size(), AggroRadius);
-	return !InTargetRange(CombatTarget, AggroRadius);
+	return !InTargetRange(CombatTarget, AggroRadius + OverlapLeniency);
 }
 
 bool AEnemy::IsOutsideAttackRadius()
@@ -409,6 +441,16 @@ bool AEnemy::IsEngaged()
 	return EnemyState == EEnemyState::EES_Engaged;
 }
 
+bool AEnemy::IsAlerting()
+{
+	return EnemyState == EEnemyState::EES_Alerting;
+}
+
+bool AEnemy::IsInCombat()
+{
+	return IsAttacking() || IsEngaged() || IsChasing();
+}
+
 void AEnemy::ClearPatrolTimer()
 {
 	GetWorldTimerManager().ClearTimer(PatrolTimer);
@@ -419,9 +461,15 @@ void AEnemy::ClearAttackTimer()
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 }
 
+void AEnemy::ClearAlertTimer()
+{
+	GetWorldTimerManager().ClearTimer(AlertTimer);
+}
+
 bool AEnemy::InTargetRange(AActor* Target, double Radius)
 {
 	if (Target == nullptr) return false;
+	//UE_LOG(LogTemp, Warning, TEXT("InTargetRange(): Size: %f <= %f"), (Target->GetActorLocation() - GetActorLocation()).Size(), Radius);
 	return (Target->GetActorLocation() - GetActorLocation()).Size() <= Radius;
 }
 
@@ -438,6 +486,7 @@ void AEnemy::MoveToTarget(AActor* TheTarget, double Distance, FColor DebugColor)
 	MoveRequest.SetAcceptanceRadius(AcceptanceDistance);
 
 	EnemyController->MoveTo(MoveRequest, &NavPath);
+	//DrawDebugSphere(GetWorld(), TheTarget->GetActorLocation(), 10.f, 8, FColor::Red, false, 60.f, 0, 2.f);
 }
 
 void AEnemy::SpawnDefaultWeapons()
@@ -478,6 +527,19 @@ void AEnemy::ShowHealthBar()
 	}
 }
 
+/*
+* 0 = clear the state (hide the widget)
+* 1 = alerting state
+* 2 = combat state
+*/
+void AEnemy::SetCombatIndicatorWidgetState(int32 CombatState)
+{
+	if (CombatStateWidget)
+	{
+		CombatStateWidget->SetState(CombatState);
+	}
+}
+
 void AEnemy::SpawnSoul()
 {
 	if (GetWorld() && SoulClass && Attributes)
@@ -494,27 +556,73 @@ void AEnemy::SpawnSoul()
 
 void AEnemy::UpdateEnemyState(EEnemyState State)
 {
+	if (EnemyState == EEnemyState::EES_Alerting && State != EEnemyState::EES_Alerting) ClearAlertTimer();
+	if (EnemyState == EEnemyState::EES_Patrolling && State != EEnemyState::EES_Patrolling)
+	{
+		ClearPatrolTimer();
+		EnemyController->StopMovement();
+	}
+
 	EnemyState = State;
 
 	switch (State)
 	{
 	case EEnemyState::EES_NoState:
+		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): Setting state to NoState"));
 		CheckCombatTarget();
 		break;
 	case EEnemyState::EES_Patrolling:
+		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): Setting state to Patrolling"));
+		CombatTarget = nullptr;
+		HideHealthBar();
+		SetCombatIndicatorWidgetState(0);
 		GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
 		MoveToTarget(PatrolTarget);
 		break;
 	case EEnemyState::EES_Chasing:
+		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): %s: Setting state to Chasing"), *GetName());
 		GetCharacterMovement()->MaxWalkSpeed = ChasingSpeed;
 		ShowHealthBar();
-		ClearPatrolTimer();
+		SetCombatIndicatorWidgetState(2);
 		AggroTargets.Empty();
 		MoveToTarget(CombatTarget);
 		break;
 	case EEnemyState::EES_Attacking:
-		const float AttackTime = FMath::RandRange(AttackMin, AttackMax);
-		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
+		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): %s: Setting state to Attacking"), *GetName());
+		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, FMath::RandRange(AttackMin, AttackMax));
+		break;
+	case EEnemyState::EES_Alerting:
+		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): %s: Setting state to Alerting"), *GetName());
+		CombatTarget = nullptr;
+		ClearAlertTimer();
+		SetCombatIndicatorWidgetState(1);
+		FindNavigablePath(AlertingLocation);
 		break;
 	}
+}
+
+bool AEnemy::FindNavigablePath(FVector DesiredLocation)
+{
+	// Will need to have error handling in the case that the DesiredLocation is unreachable
+	if (EnemyController == nullptr) return false;
+	//UE_LOG(LogTemp, Warning, TEXT("FindNavigablePath(): Moving to the AlertLocation"));
+
+	FAIMoveRequest MoveRequest;
+	FNavPathSharedPtr NavPath;
+
+	MoveRequest.SetGoalLocation(DesiredLocation);
+	MoveRequest.SetAcceptanceRadius(AcceptanceRadius);
+
+	EnemyController->MoveTo(MoveRequest, &NavPath);
+	//DrawDebugSphere(GetWorld(), DesiredLocation, 10.f, 8, FColor::Purple, false, 60.f, 0, 2.f);
+	return true;
+}
+
+void AEnemy::MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	// Prevent an accidental completed move execution while patrolling
+	if (EnemyState != EEnemyState::EES_Alerting) return;
+	//UE_LOG(LogTemp, Warning, TEXT("MoveCompleted(): Setting timer before going back to Patrolling"));
+
+	GetWorldTimerManager().SetTimer(AlertTimer, this, &AEnemy::StartPatrolling, AlertWaitTime);
 }
