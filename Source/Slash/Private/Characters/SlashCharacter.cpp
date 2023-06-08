@@ -202,7 +202,7 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void ASlashCharacter::Jump()
 {
-	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Attacking) return;
+	if (ActionState != EActionState::EAS_Unoccupied && ActionState != EActionState::EAS_Attacking && ActionState != EActionState::EAS_Sprinting) return;
 
 	Super::Jump();
 }
