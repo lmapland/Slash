@@ -73,6 +73,9 @@ Plugins/*/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
+# Models & textures exported for Blender
+ExportedForUI/*
+
 # Don't want any of these files saved; they will be in a submodule
 Content/*
 !Content/Assets/
