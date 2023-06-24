@@ -18,7 +18,7 @@
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Navigation/PathFollowingComponent.h"
-//#include "DrawDebugHelpers.h"
+#include "Characters/SlashCharacter.h"
 
 // public
 AEnemy::AEnemy()
@@ -85,8 +85,8 @@ void AEnemy::Tick(float DeltaTime)
 		}
 		if (NewCombatTarget)
 		{
-			CombatTarget = NewCombatTarget;
-			UE_LOG(LogTemp, Warning, TEXT("Tick, clearing AggroTargets %s: %s"), *GetName(), *NewCombatTarget->GetName());
+			SetCombatTarget(NewCombatTarget);
+			//UE_LOG(LogTemp, Warning, TEXT("Tick, clearing AggroTargets %s: %s"), *GetName(), *NewCombatTarget->GetName());
 			UpdateEnemyState(EEnemyState::EES_Chasing);
 		}
 	}
@@ -107,7 +107,7 @@ float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEv
 	ABaseCharacter* Character = Cast<ABaseCharacter>(EventInstigator->GetPawn());
 	if (Character)
 	{
-		CombatTarget = Character;
+		SetCombatTarget(Character);
 		AggroTargets.Empty();
 		DisplayDamageWidget(DamageAmount);
 
@@ -308,7 +308,7 @@ void AEnemy::OnAggroSphereOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 
 	if (CurrentAngle >= AggroAngleLeft && CurrentAngle <= AggroAngleRight)
 	{
-		CombatTarget = Target;
+		SetCombatTarget(Target);
 		//UE_LOG(LogTemp, Warning, TEXT("OnAggroSphereOverlap, emptying array: %s: %s"), *GetName(), *OtherActor->GetName());
 		UpdateEnemyState(EEnemyState::EES_Chasing);
 	}
@@ -575,7 +575,7 @@ void AEnemy::UpdateEnemyState(EEnemyState State)
 		break;
 	case EEnemyState::EES_Patrolling:
 		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): Setting state to Patrolling"));
-		CombatTarget = nullptr;
+		SetCombatTarget(nullptr);
 		HideHealthBar();
 		SetCombatIndicatorWidgetState(0);
 		GetCharacterMovement()->MaxWalkSpeed = PatrollingSpeed;
@@ -595,7 +595,7 @@ void AEnemy::UpdateEnemyState(EEnemyState State)
 		break;
 	case EEnemyState::EES_Alerting:
 		//UE_LOG(LogTemp, Warning, TEXT("UpdateEnemyState(): %s: Setting state to Alerting"), *GetName());
-		CombatTarget = nullptr;
+		SetCombatTarget(nullptr);
 		ClearAlertTimer();
 		SetCombatIndicatorWidgetState(1);
 		FindNavigablePath(AlertingLocation);
@@ -627,4 +627,22 @@ void AEnemy::MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& R
 	//UE_LOG(LogTemp, Warning, TEXT("MoveCompleted(): Setting timer before going back to Patrolling"));
 
 	GetWorldTimerManager().SetTimer(AlertTimer, this, &AEnemy::StartPatrolling, AlertWaitTime);
+}
+
+void AEnemy::SetCombatTarget(ABaseCharacter* NewTarget)
+{
+	if (CombatTarget != nullptr)
+	{
+		if (ASlashCharacter* Target = Cast<ASlashCharacter>(CombatTarget))
+		{
+			Target->RemoveFromTargetList(this);
+		}
+	}
+
+	CombatTarget = NewTarget;
+
+	if (ASlashCharacter* Target = Cast<ASlashCharacter>(CombatTarget))
+	{
+		Target->AddToTargetList(this);
+	}
 }

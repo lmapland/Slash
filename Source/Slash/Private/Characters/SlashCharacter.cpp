@@ -29,6 +29,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Interfaces/Interactable.h"
+#include "Enemy/Enemy.h"
 
 // public
 ASlashCharacter::ASlashCharacter()
@@ -344,6 +345,26 @@ void ASlashCharacter::UseItem(int32 ItemID, int32 InventorySlot, int32 Amount)
 	else
 	{
 		GetWorldTimerManager().SetTimer(InitilizationTimer, this, &ASlashCharacter::FinishUseItem, 2.f);
+	}
+}
+
+void ASlashCharacter::AddToTargetList(AEnemy* ToAdd)
+{
+	CurrentTargetOf.AddUnique(ToAdd);
+
+	if (CurrentTargetOf.Num() == 1)
+	{
+		SlashOverlay->SetCombatInstructionsVisible(true);
+	}
+}
+
+void ASlashCharacter::RemoveFromTargetList(AEnemy* ToRemove)
+{
+	CurrentTargetOf.Remove(ToRemove);
+
+	if (CurrentTargetOf.Num() == 0)
+	{
+		SlashOverlay->SetCombatInstructionsVisible(false);
 	}
 }
 

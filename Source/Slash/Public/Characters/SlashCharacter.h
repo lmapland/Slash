@@ -25,6 +25,7 @@ class APlayerController;
 class ALandscapeResource;
 class USoundBase;
 class UNiagaraSystem;
+class AEnemy;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
@@ -41,6 +42,8 @@ public:
 	virtual void AddItem(int ItemID, int Amount) override;
 	void RemoveItem(int ItemID, int Amount);
 	void UseItem(int32 ItemID, int32 InventorySlot, int32 Amount = 1);
+	void AddToTargetList(AEnemy* ToAdd);
+	void RemoveFromTargetList(AEnemy* ToRemove);
 
 	UFUNCTION(BlueprintCallable)
 	void DropItem(int32 SlotID, bool RemoveFromInventory = false);
@@ -193,6 +196,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "General")
 	FName MainMenuLevelName = TEXT("MainMenu");
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<AEnemy*> CurrentTargetOf;
 
 private:
 	void InitializeSlashOverlay();

@@ -81,6 +81,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void HideInteractMsg();
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void SetCombatInstructionsVisible(bool IsVisible);
+
 
 private:
 	UPROPERTY(meta = (BindWidget))

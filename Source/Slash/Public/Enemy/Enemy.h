@@ -121,6 +121,7 @@ private:
 	void UpdateEnemyState(EEnemyState State);
 	bool FindNavigablePath(FVector DesiredLocation);
 	void MoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result);
+	void SetCombatTarget(ABaseCharacter* NewTarget);
 
 	// AI Behavior
 	UPROPERTY(VisibleAnywhere)
