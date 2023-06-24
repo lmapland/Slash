@@ -24,12 +24,6 @@ public:
 	virtual FString GetActorName() override;
 	virtual FString GetInteractWord() override;
 
-	UFUNCTION()
-	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	FName AnimationToPlay;
 	
@@ -42,9 +36,6 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* ItemMesh;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	USphereComponent* Sphere;
 
 	// The tool, like a mining pick or an axe, to spawn for the animation
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")

@@ -18,8 +18,6 @@ ALandscapeResource::ALandscapeResource()
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
 	ItemMesh->SetupAttachment(GetRootComponent());
 
-	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
-	Sphere->SetupAttachment(ItemMesh);
 }
 
 void ALandscapeResource::PickedUp()
@@ -47,30 +45,10 @@ FString ALandscapeResource::GetInteractWord()
 	return InteractWord;
 }
 
-void ALandscapeResource::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
-	if (PickupInterface)
-	{
-		PickupInterface->SetOverlappingResource(this);
-	}
-}
-
-void ALandscapeResource::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
-	if (PickupInterface)
-	{
-		PickupInterface->SetOverlappingResource(nullptr);
-	}
-}
-
 // Called when the game starts or when spawned
 void ALandscapeResource::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ALandscapeResource::OnSphereOverlap);
-	Sphere->OnComponentEndOverlap.AddDynamic(this, &ALandscapeResource::OnSphereEndOverlap);
 }
 

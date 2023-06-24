@@ -84,7 +84,6 @@ void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOw
 	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
 	AttachMeshToSocket(InParent, InSocketName);
-	DisableSphereCollision();
 
 	DeactivateEmbers();
 }
@@ -94,14 +93,6 @@ void AWeapon::DeactivateEmbers()
 	if (ItemParticles)
 	{
 		ItemParticles->Deactivate();
-	}
-}
-
-void AWeapon::DisableSphereCollision()
-{
-	if (Sphere)
-	{
-		Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 

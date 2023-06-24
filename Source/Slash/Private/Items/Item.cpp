@@ -23,38 +23,14 @@ AItem::AItem()
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
 	ItemMesh->SetupAttachment(GetRootComponent());
 	
-	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
-	Sphere->SetupAttachment(ItemMesh);
-
 	ItemParticles = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemParticles"));
 	ItemParticles->SetupAttachment(ItemMesh);
-}
-
-void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
-	if (PickupInterface)
-	{
-		PickupInterface->SetOverlappingItem(this);
-	}
-}
-
-void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
-	if (PickupInterface)
-	{
-		PickupInterface->SetOverlappingItem(nullptr);
-	}
 }
 
 // Called when the game starts or when spawned
 void AItem::BeginPlay()
 {
 	Super::BeginPlay();
-
-	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AItem::OnSphereOverlap);
-	Sphere->OnComponentEndOverlap.AddDynamic(this, &AItem::OnSphereEndOverlap);
 
 }
 

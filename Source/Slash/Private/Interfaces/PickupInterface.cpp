@@ -5,15 +5,6 @@
 
 // Add default functionality here for any IPickupInterface functions that are not pure virtual.
 
-void IPickupInterface::SetOverlappingItem(class AItem* Item)
-{
-}
-
-void IPickupInterface::SetOverlappingResource(class ALandscapeResource* Resource)
-{
-
-}
-
 void IPickupInterface::AddItem(int ItemID, int Amount)
 {
 

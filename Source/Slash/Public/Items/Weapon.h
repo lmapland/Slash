@@ -19,7 +19,6 @@ public:
 	AWeapon();
 	void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 	void DeactivateEmbers();
-	void DisableSphereCollision();
 	void PlayEquipSound();
 	void AttachMeshToSocket(USceneComponent* InParent, FName InSocketName);
 

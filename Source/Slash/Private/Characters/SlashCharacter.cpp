@@ -249,16 +249,6 @@ float ASlashCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const&
 	return DamageAmount;
 }
 
-void ASlashCharacter::SetOverlappingItem(AItem* Item)
-{
-	OverlappingItem = Item;
-}
-
-void ASlashCharacter::SetOverlappingResource(ALandscapeResource* Resource)
-{
-	OverlappingResource = Resource;
-}
-
 void ASlashCharacter::AddItem(int ItemID, int Amount)
 {
 	if (Inventory && Attributes && SlashOverlay)

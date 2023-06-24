@@ -38,8 +38,6 @@ public:
 	virtual void Jump() override;
 	virtual void GetHit_Implementation(const FVector& ImpactPoint, float DamageDealt, AActor* Hitter) override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-	virtual void SetOverlappingItem(AItem* Item) override;
-	virtual void SetOverlappingResource(ALandscapeResource* Resource) override;
 	virtual void AddItem(int ItemID, int Amount) override;
 	void RemoveItem(int ItemID, int Amount);
 	void UseItem(int32 ItemID, int32 InventorySlot, int32 Amount = 1);
@@ -294,16 +292,10 @@ private:
 	USkeletalMeshComponent* HelmetArmourComponent;
 
 
-	UPROPERTY(VisibleInstanceOnly)
-	AItem* OverlappingItem;
-
 	UPROPERTY(VisibleAnywhere)
 	TArray<AActor*> OverlappingActors;
 
 	AActor* HoveredInteractable;
-
-	UPROPERTY(VisibleInstanceOnly)
-	ALandscapeResource* OverlappingResource;
 
 	FTimerHandle InitilizationTimer;
 	FTimerHandle DeathTimer;
