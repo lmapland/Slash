@@ -789,7 +789,6 @@ void ASlashCharacter::AttachWeaponToHand()
 /* Called when the user completes the animaton for picking up a LandscapeResource */
 void ASlashCharacter::CompleteItemPickup()
 {
-	// Called by Anim Notify to un-stuck the character
 	UpdateActionState(EActionState::EAS_Unoccupied);
 
 	if (EquippedResourceTool)

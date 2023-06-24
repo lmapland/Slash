@@ -2,7 +2,6 @@
 
 
 #include "Items/LandscapeResource.h"
-#include "Components/SphereComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Interfaces/PickupInterface.h"
 
