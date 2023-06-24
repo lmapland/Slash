@@ -76,6 +76,7 @@ protected:
 	void Equip1HWeapon(AWeapon* Weapon);
 	virtual bool CanAttack() override;
 	bool CanSprint();
+	bool CanInteract();
 	virtual void Die_Implementation() override;
 	
 	UFUNCTION(BlueprintCallable)

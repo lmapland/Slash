@@ -444,6 +444,8 @@ void ASlashCharacter::Look(const FInputActionValue& Value)
 // note that Stephen is using the phrase "equip" while I use "interact" - we both use the 'e' key
 void ASlashCharacter::Interact()
 {
+	if (!CanInteract()) return;
+
 	FHitResult HitResult;
 	if (!PerformLineTrace(HitResult)) return;
 
@@ -549,10 +551,6 @@ void ASlashCharacter::LineTraceForInteractable()
 
 bool ASlashCharacter::PerformLineTrace(FHitResult& HitResult)
 {
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-	// ObjectTypeQuery3 is 'Pawn' - if I expand this system to line trace to look for items as well (AActors) this will need to change
-	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery3);
-	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery2);
 	TArray<AActor*> ActorsToIgnore;
 	ActorsToIgnore.Add(this);
 	if (EquippedWeapon) ActorsToIgnore.Add(EquippedWeapon);
@@ -562,7 +560,7 @@ bool ASlashCharacter::PerformLineTrace(FHitResult& HitResult)
 	FRotator MouseRotation = ViewCamera->GetComponentRotation();
 	FVector DirectionOfLineTrace = MouseRotation.Vector() * (InteractDistance + CameraBoom->TargetArmLength);
 
-	UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), MouseOrigin, MouseOrigin + DirectionOfLineTrace, ObjectTypes, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true);
+	UKismetSystemLibrary::LineTraceSingle(GetWorld(), MouseOrigin, MouseOrigin + DirectionOfLineTrace, ETraceTypeQuery::TraceTypeQuery4, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true);
 	//UKismetSystemLibrary::DrawDebugLine(this, MouseOrigin, MouseOrigin + DirectionOfLineTrace, FLinearColor::Black, 180.f);
 
 	if (!HitResult.bBlockingHit)
@@ -740,6 +738,11 @@ bool ASlashCharacter::CanSprint()
 	return (ActionState == EActionState::EAS_Unoccupied) &&
 		(GetVelocity().X != 0.f) && (GetVelocity().Y != 0.f) &&
 		(Attributes->GetStamina() > 0);
+}
+
+bool ASlashCharacter::CanInteract()
+{
+	return (ActionState == EActionState::EAS_Unoccupied || ActionState == EActionState::EAS_Sprinting);
 }
 
 void ASlashCharacter::Die_Implementation()
