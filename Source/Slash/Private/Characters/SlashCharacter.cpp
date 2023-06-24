@@ -15,6 +15,7 @@
 #include "Components/QuestObjectiveTypes.h"
 #include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/AttributeComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/Inventory.h"
@@ -54,6 +55,10 @@ ASlashCharacter::ASlashCharacter()
 
 	ViewCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ViewCamera"));
 	ViewCamera->SetupAttachment(CameraBoom);
+
+	ItemSphere = CreateDefaultSubobject<USphereComponent>(TEXT("ItemSphere"));
+	ItemSphere->SetupAttachment(GetRootComponent());
+	ItemSphere->SetSphereRadius(150.f);
 
 	Quests = CreateDefaultSubobject<UQuestComponent>(TEXT("Quests"));
 
@@ -151,6 +156,16 @@ void ASlashCharacter::Tick(float DeltaTime)
 {
 	if (Attributes && SlashOverlay)
 	{
+		// Interactable Actor display
+		if (OverlappingActors.Num() > 0) LineTraceForInteractable();
+
+		// Health regen
+		if (Attributes->GetHealth() < Attributes->GetMaxHealth())
+		{
+			Attributes->RegenHealth(DeltaTime);
+			SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+		}
+
 		// Stamina use / regen
 		if (ActionState == EActionState::EAS_Sprinting)
 		{
@@ -360,7 +375,30 @@ void ASlashCharacter::DropItem(int32 SlotID, bool RemoveFromInventory)
 	{
 		Inventory->Empty(SlotID);
 	}
+}
 
+void ASlashCharacter::OnItemSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	IInteractable* InteractableObject = Cast<IInteractable>(OtherActor);
+	if (InteractableObject)
+	{
+		OverlappingActors.AddUnique(OtherActor);
+	}
+}
+
+void ASlashCharacter::OnItemSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	IInteractable* InteractableObject = Cast<IInteractable>(OtherActor);
+	if (InteractableObject)
+	{
+		OverlappingActors.Remove(OtherActor);
+	}
+
+	if (OverlappingActors.Num() == 0)
+	{
+		HoveredInteractable = nullptr;
+		SlashOverlay->HideInteractMsg();
+	}
 }
 
 // protected
@@ -379,6 +417,9 @@ void ASlashCharacter::BeginPlay()
 			Subsystem->AddMappingContext(CharMappingContext, 0);
 		}
 	}
+
+	ItemSphere->OnComponentBeginOverlap.AddDynamic(this, &ASlashCharacter::OnItemSphereOverlap);
+	ItemSphere->OnComponentEndOverlap.AddDynamic(this, &ASlashCharacter::OnItemSphereEndOverlap);
 
 	EventsSubsystem = GetGameInstance()->GetSubsystem<UEventsSubsystem>();
 
@@ -413,82 +454,133 @@ void ASlashCharacter::Look(const FInputActionValue& Value)
 // note that Stephen is using the phrase "equip" while I use "interact" - we both use the 'e' key
 void ASlashCharacter::Interact()
 {
-	if (OverlappingItem)
+	FHitResult HitResult;
+	if (!PerformLineTrace(HitResult)) return;
+
+	if (SlashOverlay && Attributes)
 	{
-		AItem* Item = Cast<AItem>(OverlappingItem);
-		if (Item)
+		UE_LOG(LogTemp, Warning, TEXT("In Interact(): Performed line trace & hit something: %s"), *HitResult.GetActor()->GetName());
+		if (IInteractable* Interactable = Cast<IInteractable>(HitResult.GetActor()))
 		{
-			Item->PickUp();
-			AddItem(Item->GetItemID(), Item->GetAmount());
-		}
-	}
-	else if (OverlappingResource)
-	{
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance && GatheringMontage && OverlappingResource->Pickable())
-		{
-			UpdateActionState(EActionState::EAS_PickingUp);
-			int32 ToolID = OverlappingResource->GetToolID();
-			FName SocketToUse = OverlappingResource->GetToolSocketName();
-			if (ToolID > -1)
+			// We're sure this item is interactable; now sort out what to do with it
+			// Items
+			AItem* Item = Cast<AItem>(Interactable);
+			if (Item)
 			{
-				if (EquippedWeapon)
-				{
-					EquippedWeapon->GetMesh()->SetHiddenInGame(true);
-				}
-
-				// Get DT item
-				FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ToolID)), "SpawnResourceTool");
-				AItem* Spawned = SpawnItem(ItemRow->class_ref);
-				EquippedResourceTool = Spawned;
-
-				if (Spawned->GetMesh())
-				{
-					FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
-					Spawned->GetMesh()->AttachToComponent(GetMesh(), TransformRules, SocketToUse);
-				}
+				Item->PickUp();
+				AddItem(Item->GetItemID(), Item->GetAmount());
+				return;
 			}
-			OverlappingResource->Pick();
-			AddItem(OverlappingResource->GetItemID(), OverlappingResource->GetAmount());
-			AnimInstance->Montage_Play(GatheringMontage, OverlappingResource->AnimSpeed);
-			AnimInstance->Montage_JumpToSection(OverlappingResource->AnimationToPlay, GatheringMontage);
+
+			// Landscape Resource
+			ALandscapeResource* Resource = Cast<ALandscapeResource>(Interactable);
+			if (Resource)
+			{
+				InteractWithLandscapeResource(Resource);
+			}
+
+			// Merchant & Containers
+			Interactable->Interact(SlashOverlay, Attributes);
 		}
 	}
-	else // is user trying to interact with an NPC?
+}
+
+void ASlashCharacter::InteractWithLandscapeResource(ALandscapeResource* Resource)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && GatheringMontage && Resource->Pickable())
 	{
-		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-		// ObjectTypeQuery3 is 'Pawn' - if I expand this system to line trace to look for items as well (AActors) this will need to change
-		ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery3);
-		ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery2);
-		TArray<AActor*> ActorsToIgnore;
-		ActorsToIgnore.Add(this);
-		if (EquippedWeapon) ActorsToIgnore.Add(EquippedWeapon);
-		FHitResult HitResult;
-
-		// how to get the camera location & rotation in world space
-		FVector MouseOrigin = ViewCamera->GetComponentLocation();
-		FRotator MouseRotation = ViewCamera->GetComponentRotation();
-		FVector DirectionOfLineTrace =  MouseRotation.Vector() * (InteractDistance + CameraBoom->TargetArmLength);
-
-		UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), MouseOrigin, MouseOrigin + DirectionOfLineTrace, ObjectTypes, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true);
-		//UKismetSystemLibrary::DrawDebugLine(this, MouseOrigin, MouseOrigin + DirectionOfLineTrace, FLinearColor::Black, 180.f);
-
-		// LineTrace hit nothing. Do nothing.
-		if (!HitResult.bBlockingHit)
+		UpdateActionState(EActionState::EAS_PickingUp);
+		int32 ToolID = Resource->GetToolID();
+		FName SocketToUse = Resource->GetToolSocketName();
+		if (ToolID > -1)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("In Interact(): Performed line trace & hit nothing"));
-			return;
-		}
-
-		if (SlashOverlay && Attributes)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("In Interact(): Performed line trace & hit something: %s"), *HitResult.GetActor()->GetName());
-			if (IInteractable* Interactable = Cast<IInteractable>(HitResult.GetActor()))
+			if (EquippedWeapon)
 			{
-				Interactable->Interact(SlashOverlay, Attributes);
+				EquippedWeapon->GetMesh()->SetHiddenInGame(true);
+			}
+
+			// Get DT item
+			FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ToolID)), "SpawnResourceTool");
+			AItem* Spawned = SpawnItem(ItemRow->class_ref);
+			EquippedResourceTool = Spawned;
+
+			if (Spawned->GetMesh())
+			{
+				FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
+				Spawned->GetMesh()->AttachToComponent(GetMesh(), TransformRules, SocketToUse);
 			}
 		}
+		Resource->Pick();
+		AddItem(Resource->GetItemID(), Resource->GetAmount());
+		AnimInstance->Montage_Play(GatheringMontage, Resource->AnimSpeed);
+		AnimInstance->Montage_JumpToSection(Resource->AnimationToPlay, GatheringMontage);
 	}
+}
+
+void ASlashCharacter::LineTraceForInteractable()
+{
+	//UE_LOG(LogTemp, Warning, TEXT("LineTraceForInteractable()"));
+	FHitResult HitResult;
+
+	if (PerformLineTrace(HitResult))
+	{
+		IInteractable* Interactable = Cast<IInteractable>(HitResult.GetActor());
+		if (Interactable)
+		{
+			if (HoveredInteractable)
+			{
+				// Hit Result && Hovered: either they are the same or different
+				if (HitResult.GetActor() == HoveredInteractable) return;
+				else
+				{
+					HoveredInteractable = HitResult.GetActor();
+					SlashOverlay->UpdateInteractMsg(Interactable->GetActorName(), Interactable->GetInteractWord());
+				}
+			}
+			else
+			{
+				// Hit Result && NO Hovered: set Hovered
+				HoveredInteractable = HitResult.GetActor();
+				SlashOverlay->UpdateInteractMsg(Interactable->GetActorName(), Interactable->GetInteractWord());
+			}
+		}
+	}
+	else
+	{
+		if (HoveredInteractable)
+		{
+			// NO Hit Result && Hovered: Unset Hovered
+			HoveredInteractable = nullptr;
+			SlashOverlay->HideInteractMsg();
+		}
+	}
+}
+
+bool ASlashCharacter::PerformLineTrace(FHitResult& HitResult)
+{
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	// ObjectTypeQuery3 is 'Pawn' - if I expand this system to line trace to look for items as well (AActors) this will need to change
+	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery3);
+	ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery2);
+	TArray<AActor*> ActorsToIgnore;
+	ActorsToIgnore.Add(this);
+	if (EquippedWeapon) ActorsToIgnore.Add(EquippedWeapon);
+
+	// how to get the camera location & rotation in world space
+	FVector MouseOrigin = ViewCamera->GetComponentLocation();
+	FRotator MouseRotation = ViewCamera->GetComponentRotation();
+	FVector DirectionOfLineTrace = MouseRotation.Vector() * (InteractDistance + CameraBoom->TargetArmLength);
+
+	UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), MouseOrigin, MouseOrigin + DirectionOfLineTrace, ObjectTypes, false, ActorsToIgnore, EDrawDebugTrace::None, HitResult, true);
+	//UKismetSystemLibrary::DrawDebugLine(this, MouseOrigin, MouseOrigin + DirectionOfLineTrace, FLinearColor::Black, 180.f);
+
+	if (!HitResult.bBlockingHit)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 void ASlashCharacter::Dodge()

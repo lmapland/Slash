@@ -8,3 +8,13 @@ void IInteractable::Interact(USlashOverlay* Overlay, UAttributeComponent* Attrib
 {
 
 }
+
+FString IInteractable::GetActorName()
+{
+    return FString();
+}
+
+FString IInteractable::GetInteractWord()
+{
+    return FString();
+}

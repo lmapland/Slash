@@ -16,6 +16,7 @@ public:
 	UAttributeComponent();
 	void RegenStamina(float DeltaTime);
 	void DrainStamina(float DeltaTime);
+	void RegenHealth(float DeltaTime);
 	bool Contains(int32 ItemID, int32 Amount);
 
 protected:
@@ -45,6 +46,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	float StaminaDrainRate = 12.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
+	float HealthRegenRate = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Actor Attributes")
 	int32 Level = 1;

@@ -28,5 +28,6 @@ void USlashAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		ActionState = SlashCharacter->GetActionState();
 		DeathPose = SlashCharacter->GetDeathPose();
 		bIsBlocking = SlashCharacter->GetActionState() == EActionState::EAS_Blocking;
+		bIsSprinting = SlashCharacter->GetActionState() == EActionState::EAS_Sprinting;
 	}
 }

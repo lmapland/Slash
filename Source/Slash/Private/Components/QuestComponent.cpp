@@ -20,19 +20,19 @@ UQuestComponent::UQuestComponent()
 	Quests[0]->Objectives[0]->ID = 10;
 
 	Quests[0]->Objectives.Add(new FObjective);
-	Quests[0]->Objectives[1]->DisplayName = TEXT("Open your inventory and equip the sword");
+	Quests[0]->Objectives[1]->DisplayName = TEXT("Open your inventory with 'tab' and equip the sword");
 	Quests[0]->Objectives[1]->Type = EObjectiveType::EOT_ItemEquipped;
 	Quests[0]->Objectives[1]->ID = 10;
 	Quests[0]->Objectives[0]->NextObjective = Quests[0]->Objectives[1];
 
 	Quests[0]->Objectives.Add(new FObjective);
-	Quests[0]->Objectives[2]->DisplayName = TEXT("Kill two enemies");
+	Quests[0]->Objectives[2]->DisplayName = TEXT("Kill two enemies (left click to swing)");
 	Quests[0]->Objectives[2]->Type = EObjectiveType::EOT_EnemyKilled;
 	Quests[0]->Objectives[2]->NumEvents = 2;
 	Quests[0]->Objectives[1]->NextObjective = Quests[0]->Objectives[2];
 
 	Quests[0]->Objectives.Add(new FObjective);
-	Quests[0]->Objectives[3]->DisplayName = TEXT("Open your inventory and level up");
+	Quests[0]->Objectives[3]->DisplayName = TEXT("Open your inventory with 'tab' and level up");
 	Quests[0]->Objectives[3]->Type = EObjectiveType::EOT_LeveledUp;
 	Quests[0]->Objectives[2]->NextObjective = Quests[0]->Objectives[3];
 

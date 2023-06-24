@@ -49,6 +49,8 @@ AEnemy::AEnemy()
 	Hearing = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 	Hearing->HearingRange = 3000.f;
 	Hearing->DetectionByAffiliation.bDetectEnemies = true;
+	Hearing->DetectionByAffiliation.bDetectFriendlies = true;
+	Hearing->DetectionByAffiliation.bDetectNeutrals = true;
 	AIPerceptionComponent->ConfigureSense(*Hearing);
 	AIPerceptionComponent->SetDominantSense(Hearing->GetSenseImplementation());
 }
@@ -231,7 +233,7 @@ void AEnemy::OnPerception(AActor* Actor, FAIStimulus Stimulus)
 {
 	// Don't interupt the enemy if they're already fighting
 	// A new alert will interupt an old one
-	if (IsInCombat()) return;
+	if (IsInCombat() || IsDead()) return;
 
 	ABaseCharacter* Char = Cast<ABaseCharacter>(Actor);
 	
@@ -480,7 +482,7 @@ void AEnemy::MoveToTarget(AActor* TheTarget, double Distance, FColor DebugColor)
 	FAIMoveRequest MoveRequest;
 	FNavPathSharedPtr NavPath;
 
-	double AcceptanceDistance = Distance = 0.f ? AcceptanceRadius : Distance;
+	double AcceptanceDistance = Distance == 0.f ? AcceptanceRadius : Distance;
 
 	MoveRequest.SetGoalActor(TheTarget);
 	MoveRequest.SetAcceptanceRadius(AcceptanceDistance);

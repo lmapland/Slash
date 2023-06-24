@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/Interactable.h"
 #include "LandscapeResource.generated.h"
 
 
@@ -11,7 +12,7 @@ class USphereComponent;
 class UCapsuleComponent;
 
 UCLASS()
-class SLASH_API ALandscapeResource : public AActor
+class SLASH_API ALandscapeResource : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	
@@ -19,6 +20,9 @@ public:
 	ALandscapeResource();
 	void PickedUp(); // finalize the pickup (destroy this object)
 	void Pick(); // Pick the object, causing it to not be pickable anymore
+	virtual void Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes) override;
+	virtual FString GetActorName() override;
+	virtual FString GetInteractWord() override;
 
 	UFUNCTION()
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -54,6 +58,12 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	int32 Amount = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	FString ResourceName = FString("Resource");
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	FString InteractWord = FString("Use");
 
 private:
 	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))

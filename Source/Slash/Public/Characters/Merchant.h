@@ -18,6 +18,8 @@ class SLASH_API AMerchant : public ANPC, public IInteractable
 	GENERATED_BODY()
 public:
 	virtual void Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes) override;
+	virtual FString GetActorName() override;
+	virtual FString GetInteractWord() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Selling")

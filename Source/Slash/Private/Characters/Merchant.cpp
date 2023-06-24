@@ -9,3 +9,13 @@ void AMerchant::Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes
 {
 	Overlay->ShowMerchantMenu(ItemsToSell, ItemsToBuy, Attributes->GetGold());
 }
+
+FString AMerchant::GetActorName()
+{
+	return FString("Merchant");
+}
+
+FString AMerchant::GetInteractWord()
+{
+	return FString("Shop");
+}

@@ -10,7 +10,7 @@ UInventory::UInventory()
 
 TSubclassOf<AItem> UInventory::AddLenient(int32 ItemID, int32& Amount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AddLenient(): ItemID: %i, Amount: %i"), ItemID, Amount);
+	//UE_LOG(LogTemp, Warning, TEXT("AddLenient(): ItemID: %i, Amount: %i"), ItemID, Amount);
 	FItemStructure* Row = TableOfItems->FindRow<FItemStructure>(FName(FString::FromInt(ItemID)), Context);
 
 	// Add items
@@ -298,13 +298,13 @@ int32 UInventory::GetAmountOf(int32 ItemID)
 
 bool UInventory::Contains(int32 ItemID, int32 Amount)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): ItemID: %i, Amount: %i"), ItemID, Amount);
+	//UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): ItemID: %i, Amount: %i"), ItemID, Amount);
 	int32 HasAmount = 0;
 	for (auto Slot : Slots)
 	{
 		if (Slot->ItemID == ItemID)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): Found a slot with the same itemid"));
+			//UE_LOG(LogTemp, Warning, TEXT("Inventory::Contains(): Found a slot with the same itemid"));
 			HasAmount += Slot->CurrentStack;
 			if (HasAmount >= Amount) return true;
 		}

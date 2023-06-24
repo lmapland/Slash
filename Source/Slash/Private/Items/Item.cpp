@@ -22,15 +22,12 @@ AItem::AItem()
 
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComponent"));
 	ItemMesh->SetupAttachment(GetRootComponent());
-	//RootComponent = ItemMesh;
 	
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(ItemMesh);
-	//Sphere->SetupAttachment(GetRootComponent());
 
 	ItemParticles = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ItemParticles"));
 	ItemParticles->SetupAttachment(ItemMesh);
-	//ItemParticles->SetupAttachment(GetRootComponent());
 }
 
 void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -106,4 +103,18 @@ void AItem::PickUp()
 	PickedUp();
 	PlayPickupSound();
 	//GetWorldTimerManager().SetTimer(DestroySelfTimer, this, &AItem::PickedUp, 0.1f);
+}
+
+void AItem::Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes)
+{
+}
+
+FString AItem::GetActorName()
+{
+	return ItemName;
+}
+
+FString AItem::GetInteractWord()
+{
+	return FString("Pick up");
 }

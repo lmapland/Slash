@@ -73,6 +73,13 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Overlay")
 	void RefreshUserInventory();
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void UpdateInteractMsg(const FString& ActorName, const FString& InteractWord);
+	
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void HideInteractMsg();
+
 
 private:
 	UPROPERTY(meta = (BindWidget))

@@ -168,7 +168,7 @@ void ABaseCharacter::PlayHitReactkMontage(const FName& SectionName)
 
 void ABaseCharacter::DirectionalHitReact(const FVector& ImpactPoint, AActor* Hitter)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s HitReacting!"), *GetName())
+	//UE_LOG(LogTemp, Warning, TEXT("%s HitReacting!"), *GetName())
 	FVector ActorLoc = Hitter->GetActorLocation();
 	const FVector Forward = GetActorForwardVector();
 	const FVector ImpactLowered(ActorLoc.X, ActorLoc.Y, GetActorLocation().Z);

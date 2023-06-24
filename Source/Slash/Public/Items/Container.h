@@ -20,6 +20,8 @@ class SLASH_API AContainer : public AActor, public IInteractable
 public:
 	AContainer();
 	virtual void Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes) override;
+	virtual FString GetActorName() override;
+	virtual FString GetInteractWord() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -33,7 +35,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UInventory* Inventory;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Spawn")
+	TArray<int32> ItemsToSpawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Spawn")
+	TArray<int32> MinItemsToSpawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Object Spawn")
+	TArray<int32> MaxItemsToSpawn;
+
 private:
 	UPROPERTY(Category=Character, VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UCapsuleComponent> CapsuleComponent;
+
+	void AddStartItems();
 };

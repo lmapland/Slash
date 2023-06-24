@@ -47,6 +47,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DropItem(int32 SlotID, bool RemoveFromInventory = false);
 
+	UFUNCTION()
+	virtual void OnItemSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	virtual void OnItemSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -94,6 +101,9 @@ protected:
 	
 	UFUNCTION(BlueprintCallable)
 	void FinishUseItem();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class USphereComponent* ItemSphere;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UQuestComponent* Quests;
@@ -190,12 +200,14 @@ private:
 	void SetHUDHealth();
 	bool IsOccupied();
 	/* Pickup items */
-	void RemovePickedUpItem();
 	void UpdateActionState(EActionState State);
 	AWeapon* SpawnWeapon(TSubclassOf<AItem> ItemRef);
 	AItem* SpawnItem(TSubclassOf<AItem> ItemRef);
 	void TossItem(AItem* ItemToToss);
 	void FinishDie();
+	void InteractWithLandscapeResource(ALandscapeResource* Resource);
+	void LineTraceForInteractable();
+	bool PerformLineTrace(FHitResult& HitResult);
 
 	ECharacterState CharacterState = ECharacterState::ECS_Unequipped;
 
@@ -284,6 +296,11 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly)
 	AItem* OverlappingItem;
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<AActor*> OverlappingActors;
+
+	AActor* HoveredInteractable;
 
 	UPROPERTY(VisibleInstanceOnly)
 	ALandscapeResource* OverlappingResource;

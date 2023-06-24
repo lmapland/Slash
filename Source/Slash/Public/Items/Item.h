@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Interfaces/Interactable.h"
 #include "Item.generated.h"
 
 
@@ -14,7 +15,7 @@ enum class EItemState : uint8
 };
 
 UCLASS()
-class SLASH_API AItem : public AActor
+class SLASH_API AItem : public AActor, public IInteractable
 {
 	GENERATED_BODY()
 	
@@ -23,6 +24,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void PickedUp(); // finalize the pickup (destroy this object)
 	void PickUp(); // Pick the object, causing it to be destroyed
+	virtual void Interact(USlashOverlay* Overlay, UAttributeComponent* Attributes) override;
+	virtual FString GetActorName() override;
+	virtual FString GetInteractWord() override;
 
 	UFUNCTION()
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -56,6 +60,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	int32 ItemID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
+	FString ItemName;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Properties")
 	int32 Amount = 1;

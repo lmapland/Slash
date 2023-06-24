@@ -42,5 +42,8 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement | ActionState")
 	bool bIsBlocking;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement | ActionState")
+	bool bIsSprinting;
 	
 };
