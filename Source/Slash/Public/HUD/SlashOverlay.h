@@ -8,6 +8,9 @@
 
 class AItem;
 class UInventory;
+class UTextBlock;
+class UProgressBar;
+class UQuestsWidget;
 
 /**
  * 
@@ -20,8 +23,6 @@ class SLASH_API USlashOverlay : public UUserWidget
 public:
 	void SetHealthBarPercent(float Percent);
 	void SetStaminaBarPercent(float Percent);
-	void SetGold(int32 Gold);
-	void SetSouls(int32 Souls);
 	void SetLevelInfo(int32 Level, float LevelPercent);
 	void OpenEverythingMenu(int32 Souls, int32 SoulsNeeded, int32 NextLevel, UInventory* OtherInventory = nullptr);
 	void UpdateAttribute(int32 ItemID, float Value);
@@ -83,17 +84,11 @@ public:
 
 private:
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* HealthProgressBar;
+	UProgressBar* HealthProgressBar;
 
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* StaminaProgressBar;
 
-	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* GoldText;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* SoulsText;
-	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* LevelText;
 	
@@ -101,7 +96,7 @@ private:
 	UProgressBar* LevelProgressBar;
 	
 	UPROPERTY(meta = (BindWidget))
-	class UQuestsWidget* QuestWidget;
+	UQuestsWidget* QuestWidget;
 
 	FTimerHandle ClearItemPickupTimer;
 

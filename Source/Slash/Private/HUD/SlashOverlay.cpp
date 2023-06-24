@@ -21,22 +21,6 @@ void USlashOverlay::SetStaminaBarPercent(float Percent)
 	}
 }
 
-void USlashOverlay::SetGold(int32 Gold)
-{
-	if (GoldText)
-	{
-		GoldText->SetText(FText::FromString(FString::Printf(TEXT("%i"), Gold)));
-	}
-}
-
-void USlashOverlay::SetSouls(int32 Souls)
-{
-	if (SoulsText)
-	{
-		SoulsText->SetText(FText::FromString(FString::Printf(TEXT("%i"), Souls)));
-	}
-}
-
 void USlashOverlay::SetLevelInfo(int32 Level, float LevelPercent)
 {
 	if (LevelText)
@@ -65,11 +49,8 @@ void USlashOverlay::UpdateAttribute(int32 ItemID, float Value)
 	case 1:
 		SetStaminaBarPercent(Value);
 		break;
-	case 2:
-		SetSouls((int32)Value);
-		break;
 	case 3:
-		SetGold((int32)Value);
+		UpdateGold((int32)Value);
 		break;
 	}
 }

@@ -794,6 +794,7 @@ void ASlashCharacter::CompleteItemPickup()
 	if (EquippedResourceTool)
 	{
 		EquippedResourceTool->Destroy();
+		EquippedResourceTool = nullptr;
 	}
 
 	if (EquippedWeapon && EquippedWeapon->GetMesh())
@@ -951,8 +952,7 @@ void ASlashCharacter::InitializeSlashOverlay()
 			{
 				SlashOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
 				SlashOverlay->SetStaminaBarPercent(1.f);
-				SlashOverlay->SetGold(0);
-				SlashOverlay->SetSouls(0);
+				SlashOverlay->UpdateGold(Attributes->GetGold());
 				SlashOverlay->SetLevelInfo(Attributes->GetLevel(), Attributes->GetPercentToNextLevel());
 				if (Quests)
 				{
