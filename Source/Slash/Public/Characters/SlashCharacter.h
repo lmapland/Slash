@@ -200,6 +200,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	TArray<AEnemy*> CurrentTargetOf;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	float MouseSensitivityMultiplier = 0.5f;
+
 private:
 	void InitializeSlashOverlay();
 	void SetHUDHealth();

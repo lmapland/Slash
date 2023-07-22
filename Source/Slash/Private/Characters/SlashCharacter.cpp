@@ -458,8 +458,8 @@ void ASlashCharacter::Look(const FInputActionValue& Value)
 {
 	const FVector2D LookAxisValue = Value.Get<FVector2D>();
 
-	AddControllerYawInput(LookAxisValue.X);
-	AddControllerPitchInput(LookAxisValue.Y);
+	AddControllerYawInput(LookAxisValue.X * MouseSensitivityMultiplier);
+	AddControllerPitchInput(LookAxisValue.Y * MouseSensitivityMultiplier);
 }
 
 // note that Stephen is using the phrase "equip" while I use "interact" - we both use the 'e' key
@@ -901,6 +901,7 @@ bool ASlashCharacter::ApplyPurchase(TArray<int> ItemsToRemove, TArray<int> Amoun
 
 void ASlashCharacter::FinishUseItem()
 {
+	//UE_LOG(LogTemp, Warning, TEXT("FinishUseItem()"));
 	FItemStructure* ItemRow = InventoryDataTable->FindRow<FItemStructure>(FName(FString::FromInt(ItemInUse)), "InventoryItems");
 	
 	switch (ItemRow->UseType)
@@ -937,7 +938,7 @@ void ASlashCharacter::FinishUseItem()
 					TSubclassOf<AItem> ItemRef = Inventory->AddLenient(OldWeaponID, AmountNotAdded);
 					if (AmountNotAdded != 0) // inventory is full!
 					{
-						UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): No room left in user's inventory"));
+						//UE_LOG(LogTemp, Warning, TEXT("FinishUseItem(): No room left in user's inventory"));
 						TossItem(SpawnWeapon(ItemRef));
 					}
 				}
